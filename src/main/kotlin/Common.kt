@@ -11,11 +11,17 @@ enum class FileType(val extension: String) {
 
 fun getFile(level: Int, fileType: FileType) = File("src/main/resources/puzzle-$level.${fileType.extension}")
 
-fun getPuzzleInput(level: Int) =
-    getFile(level, FileType.IN)
+fun getInput(puzzle: Int) =
+    getFile(puzzle, FileType.IN)
         .readLines()
         .map(String::trim)
         .filter(String::isNotEmpty)
+
+fun Int.solve(solver: List<String>.() -> String) {
+    getInput(this)
+        .solver()
+        .writePuzzleSolution(this)
+}
 
 fun <T> List<T>.writePuzzleSolution(level: Int) =
     getFile(level, FileType.OUT).writeText(joinToString("\n"))

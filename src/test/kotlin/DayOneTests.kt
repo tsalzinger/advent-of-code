@@ -17,4 +17,16 @@ class FuelTests {
                 Assertions.assertEquals(it.second, it.first.calculateRequiredFuel())
             }
         }
+
+    @TestFactory
+    fun `get fuel from mass and fuel`() =
+        listOf(
+            14 to 2,
+            1969 to 966,
+            100756 to 50346
+        ).map {
+            DynamicTest.dynamicTest("Mass ${it.first} requires ${it.second} fuel") {
+                Assertions.assertEquals(it.second, it.first.calculateRequiredFuelRec())
+            }
+        }
 }
