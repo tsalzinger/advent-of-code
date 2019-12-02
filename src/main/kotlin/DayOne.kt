@@ -15,7 +15,7 @@ fun Int.calculateRequiredFuelRec(): Int {
 }
 
 
-fun List<String>.convertInput() = map { it.toInt() }
+private fun List<String>.convertInput() = map { it.toInt() }
 
 fun main() {
     solvePuzzle1()
