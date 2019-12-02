@@ -30,17 +30,39 @@ fun interpret(program: IntcodeProgram, overrides: Map<Int, Int>): IntcodeResult 
     return output
 }
 
+fun interpret(program: IntcodeProgram, noun: Int, verb: Int): IntcodeResult {
+    return interpret(program, mapOf(1 to noun, 2 to verb))
+}
+
 fun main() {
     solvePuzzle3()
+    solvePuzzle4()
 }
 
 private fun solvePuzzle3() {
     3.solve {
         convertIntcodeInput()
             .map {
-                interpret(it, mapOf(1 to 12, 2 to 2)).first()
+                interpret(it, 12, 2).first()
             }
             .first()
             .toString()
+    }
+}
+
+private fun solvePuzzle4() {
+    4.solve {
+        val initialMemory = convertIntcodeInput().first()
+
+        for (noun in 0..99) {
+            for (verb in 0..99) {
+                val result = interpret(initialMemory, noun, verb).first()
+                if (result == 19690720) {
+                    return@solve "${100 * noun + verb}"
+                }
+            }
+        }
+
+        throw RuntimeException("No solution found")
     }
 }
