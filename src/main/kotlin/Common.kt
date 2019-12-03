@@ -1,6 +1,7 @@
 package me.salzinger
 
 import java.io.File
+import kotlin.math.abs
 
 fun Double.floor() = kotlin.math.floor(this)
 
@@ -28,3 +29,10 @@ fun <T> List<T>.writePuzzleSolution(level: Int) =
 
 fun Int.writePuzzleSolution(level: Int) = listOf(this).writePuzzleSolution(level)
 fun String.writePuzzleSolution(level: Int) = listOf(this).writePuzzleSolution(level)
+
+data class Point(
+    val x: Int,
+    val y: Int
+) {
+    fun manhattenDistance(anotherPoint: Point) = abs(x - anotherPoint.x) + abs(y - anotherPoint.y)
+}
