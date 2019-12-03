@@ -85,7 +85,7 @@ class Wire(private val points: List<Point>) : List<Point> by points {
 }
 
 class Grid(
-    wires: List<Wire>
+    private val wires: List<Wire>
 ) {
     val grid: Map<Point, Set<Wire>>
     val intersections: List<Point>
@@ -104,6 +104,15 @@ class Grid(
     fun getClosestOverlapDistanceToCenter(): Int {
         return intersections.sortedBy { it.manhattenDistance(Point(0, 0)) }.first().manhattenDistance(Point(0, 0))
     }
+
+    fun getClosestOverlapDistanceInSteps(): Int {
+        return intersections.map { intersection ->
+            intersection to wires.map { wire -> wire.indexOf(intersection) + 1 }.sum()
+        }
+            .sortedBy { it.second }
+            .first()
+            .second
+    }
 }
 
 fun List<Wire>.toGrid() = Grid(this)
@@ -120,6 +129,7 @@ fun List<Movement>.toWire(): Wire {
 
 fun main() {
     solvePuzzle5()
+    solvePuzzle6()
 }
 
 private fun solvePuzzle5() {
@@ -128,6 +138,16 @@ private fun solvePuzzle5() {
             .map { it.toWire() }
             .toGrid()
             .getClosestOverlapDistanceToCenter()
+            .toString()
+    }
+}
+
+private fun solvePuzzle6() {
+    6.solve {
+        convertToMovements()
+            .map { it.toWire() }
+            .toGrid()
+            .getClosestOverlapDistanceInSteps()
             .toString()
     }
 }
