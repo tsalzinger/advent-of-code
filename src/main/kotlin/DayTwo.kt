@@ -7,6 +7,7 @@ typealias WriteableMemory = MutableList<Int>
 typealias ParameterMode = Int
 
 fun List<String>.convertIntcodeInput(): List<Memory> = map { it.split(",").map(String::toInt) }
+fun String.convertIntcodeInput(): Memory = split(",").map(String::toInt)
 
 fun resolveParameter(memory: Memory, instruction: Instruction, position: Int, memoryOffset: Int): Int {
     val parameter = memory[memoryOffset + position]
@@ -49,7 +50,7 @@ data class ProgramOutput(
     val output: List<Int>
 )
 
-fun interpret(startMemory: Memory, overrides: Map<Int, Int> = emptyMap()): ProgramOutput {
+fun interpret(startMemory: Memory, overrides: Map<Int, Int> = emptyMap(), input: Int? = null): ProgramOutput {
     val memory: WriteableMemory = startMemory.toMutableList()
 
     val output = mutableListOf<Int>()
@@ -73,13 +74,50 @@ fun interpret(startMemory: Memory, overrides: Map<Int, Int> = emptyMap()): Progr
                 index += 4
             }
             3 -> {
-                val input = 1
-                memory[memory[index + 1]] = input
+                memory[memory[index + 1]] = input ?: throw RuntimeException("No input available")
                 index += 2
             }
             4 -> {
                 output.add(resolveParameter(memory, instruction, 1, index))
                 index += 2
+            }
+            5 -> {
+                if (resolveParameter(memory, instruction, 1, index) != 0) {
+                    index = resolveParameter(memory, instruction, 2, index)
+                } else {
+                    index += 3
+                }
+            }
+            6 -> {
+                if (resolveParameter(memory, instruction, 1, index) == 0) {
+                    index = resolveParameter(memory, instruction, 2, index)
+                } else {
+                    index += 3
+                }
+            }
+            7 -> {
+                val first = resolveParameter(memory, instruction, 1, index)
+                val second = resolveParameter(memory, instruction, 2, index)
+                val outputAddress = memory[index + 3]
+
+                if (first < second) {
+                    memory[outputAddress] = 1
+                } else {
+                    memory[outputAddress] = 0
+                }
+                index += 4
+            }
+            8 -> {
+                val first = resolveParameter(memory, instruction, 1, index)
+                val second = resolveParameter(memory, instruction, 2, index)
+                val outputAddress = memory[index + 3]
+
+                if (first == second) {
+                    memory[outputAddress] = 1
+                } else {
+                    memory[outputAddress] = 0
+                }
+                index += 4
             }
             else -> throw RuntimeException("Unknown opcode $opcode")
         }
