@@ -1,36 +1,99 @@
 package me.salzinger
 
 typealias Opcode = Int
-typealias IntcodeProgram = List<Opcode>
-typealias IntcodeResult = List<Int>
+typealias Memory = List<Int>
+typealias WriteableMemory = MutableList<Int>
 
-private fun List<String>.convertIntcodeInput(): List<IntcodeProgram> = map { it.split(",").map(String::toInt) }
+typealias ParameterMode = Int
 
-fun interpret(program: IntcodeProgram, overrides: Map<Int, Int>): IntcodeResult {
-    val output = program.toMutableList()
+fun List<String>.convertIntcodeInput(): List<Memory> = map { it.split(",").map(String::toInt) }
+
+fun resolveParameter(memory: Memory, instruction: Instruction, position: Int, memoryOffset: Int): Int {
+    val parameter = memory[memoryOffset + position]
+    return when (val parameterMode = instruction.getParameterMode(position)) {
+        0 -> {
+            if (parameter < 0) {
+                throw RuntimeException("Cannot get value from negative memory address. Instruction: $instruction Position: $position Offset: $memoryOffset ParameterMode: $parameterMode")
+            } else {
+                memory[parameter]
+            }
+        }
+        1 -> parameter
+        else -> throw RuntimeException("Unsupported parameter mode $parameterMode")
+    }
+}
+
+data class Instruction(
+    val opcode: Opcode,
+    val parameterModes: List<ParameterMode>
+) {
+    fun getParameterMode(position: Int): ParameterMode {
+        return if (parameterModes.size >= position) {
+            parameterModes[position - 1]
+        } else {
+            0
+        }
+    }
+
+    companion object {
+        fun init(value: Int): Instruction {
+            val parameterModes = value.toString().dropLast(2)
+            val opcode: Opcode = value.toString().drop(parameterModes.length).toInt()
+            return Instruction(opcode, parameterModes.reversed().map { it.toString().toInt() })
+        }
+    }
+}
+
+data class ProgramOutput(
+    val memory: Memory,
+    val output: List<Int>
+)
+
+fun interpret(startMemory: Memory, overrides: Map<Int, Int> = emptyMap()): ProgramOutput {
+    val memory: WriteableMemory = startMemory.toMutableList()
+
+    val output = mutableListOf<Int>()
 
     overrides.forEach { index, override ->
-        output[index] = override
+        memory[index] = override
     }
 
     var index = 0
-    var opcode = output[index]
+    var instruction = Instruction.init(memory[index])
 
-    while (opcode != 99) {
-        when (opcode) {
-            1 -> output[output[index + 3]] = output[output[index + 1]] + output[output[index + 2]]
-            2 -> output[output[index + 3]] = output[output[index + 1]] * output[output[index + 2]]
+
+    while (instruction.opcode != 99) {
+        when (val opcode = instruction.opcode) {
+            1 -> {
+                memory[memory[index + 3]] = resolveParameter(memory, instruction, 1, index) + resolveParameter(memory, instruction, 2, index)
+                index += 4
+            }
+            2 -> {
+                memory[memory[index + 3]] = resolveParameter(memory, instruction, 1, index) * resolveParameter(memory, instruction, 2, index)
+                index += 4
+            }
+            3 -> {
+                val input = 1
+                memory[memory[index + 1]] = input
+                index += 2
+            }
+            4 -> {
+                output.add(resolveParameter(memory, instruction, 1, index))
+                index += 2
+            }
             else -> throw RuntimeException("Unknown opcode $opcode")
         }
 
-        index += 4
-        opcode = output[index]
+        instruction = Instruction.init(memory[index])
     }
 
-    return output
+    return ProgramOutput(
+        memory,
+        output
+    )
 }
 
-fun interpret(program: IntcodeProgram, noun: Int, verb: Int): IntcodeResult {
+fun interpret(program: Memory, noun: Int, verb: Int): ProgramOutput {
     return interpret(program, mapOf(1 to noun, 2 to verb))
 }
 
@@ -43,7 +106,7 @@ private fun solvePuzzle3() {
     3.solve {
         convertIntcodeInput()
             .map {
-                interpret(it, 12, 2).first()
+                interpret(it, 12, 2).memory.first()
             }
             .first()
             .toString()
@@ -56,7 +119,7 @@ private fun solvePuzzle4() {
 
         for (noun in 0..99) {
             for (verb in 0..99) {
-                val result = interpret(initialMemory, noun, verb).first()
+                val result = interpret(initialMemory, noun, verb).memory.first()
                 if (result == 19690720) {
                     return@solve "${100 * noun + verb}"
                 }
