@@ -28,17 +28,22 @@ data class Mass(
             *children.flatMap { it.getAllChildren(level + 1) }.toTypedArray()
         )
 
-    fun countOrbits(): Int = parent?.countOrbits() ?: 0
+    fun countOrbits(): Int = if (parent != null) {
+        parent!!.countOrbits() + 1
+    } else {
+        0
+    }
+
+    fun getParents(): List<Mass> = if (parent == null) {
+        emptyList()
+    } else {
+        listOf(parent!!, *parent!!.getParents().toTypedArray())
+    }
 
     private fun addChild(child: Mass) {
         children.add(child)
     }
 }
-
-class OrbitTree(
-
-)
-
 
 fun List<String>.convertOrbitInput() = map { it.split(')').run { first() to get(1) } }
 
@@ -59,6 +64,34 @@ fun main() {
         val sum: Int = root.getAllChildren().map { it.second }.sum()
         sum.toString()
     }
+
+    12.solve {
+        convertOrbitInput()
+            .forEach {
+                val first = idToMass.computeIfAbsent(it.first, ::Mass)
+                val second = idToMass.computeIfAbsent(it.second, ::Mass)
+
+                second.addParent(first)
+            }
+
+        val santa = idToMass.getValue("SAN")
+        println("SAN ${santa.getParents()} ${santa.countOrbits()}")
+        val you = idToMass.getValue("YOU")
+        println("YOU ${you.getParents()} ${you.countOrbits()}")
+
+        val junction = santa.findCommonParent(you)!!
+        println("junction ${junction.getParents()} ${junction.countOrbits()}")
+
+        val jumps = santa.countOrbits() - junction.countOrbits()  + you.countOrbits() - junction.countOrbits() - 2
+        jumps.toString()
+    }
 }
 
 fun Int.factorial() = (1..this).sum()
+
+fun Mass.findCommonParent(other: Mass): Mass? {
+    val thisParents = getParents()
+    val otherParents = other.getParents()
+
+    return thisParents.find(otherParents::contains)
+}
