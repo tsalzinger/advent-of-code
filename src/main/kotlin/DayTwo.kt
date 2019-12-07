@@ -7,7 +7,7 @@ typealias WriteableMemory = MutableList<Int>
 fun List<String>.convertIntcodeInput(): List<Memory> = map { it.split(",").map(String::toInt) }
 fun String.convertIntcodeInput(): Memory = split(",").map(String::toInt)
 
-fun interpret(memory: Memory, overrides: Map<Int, Int>): IntcodeProgramResult {
+fun interpret(memory: Memory, overrides: Map<Int, Int>): ExecutionStatus {
     return IntcodeProgramInterpreter(memory, overrides).evaluate()
 }
 
@@ -22,7 +22,7 @@ private fun solvePuzzle3() {
     3.solve {
         convertIntcodeInput()
             .map {
-                interpret(it, 12, 2).memory.first()
+                interpret(it, 12, 2).executionContext.memory.first()
             }
             .first()
             .toString()
@@ -35,7 +35,7 @@ private fun solvePuzzle4() {
 
         for (noun in 0..99) {
             for (verb in 0..99) {
-                val result = interpret(initialMemory, noun, verb).memory.first()
+                val result = interpret(initialMemory, noun, verb).executionContext.memory.first()
                 if (result == 19690720) {
                     return@solve "${100 * noun + verb}"
                 }

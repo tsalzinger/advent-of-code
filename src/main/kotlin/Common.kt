@@ -12,14 +12,14 @@ enum class FileType(val extension: String) {
 
 fun getFile(level: Int, fileType: FileType) = File("src/main/resources/puzzle-$level.${fileType.extension}")
 
-fun getInput(puzzle: Int) =
+fun getNextInput(puzzle: Int) =
     getFile(puzzle, FileType.IN)
         .readLines()
         .map(String::trim)
         .filter(String::isNotEmpty)
 
 fun Int.solve(solver: List<String>.() -> String) {
-    getInput(this)
+    getNextInput(this)
         .solver()
         .writePuzzleSolution(this)
 }

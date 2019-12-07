@@ -9,46 +9,123 @@ inline class MemoryAddress(val address: Int) {
     override fun toString() = address.toString()
 }
 
-data class IntcodeProgramResult(
-    val memory: Memory,
-    val output: List<Int>
-)
+interface InputProvider {
+    fun getNextInput(): Int
+    fun addValue(value: Int)
+    fun hasNextInput(): Boolean
+}
+
+interface OutputRecorder {
+    fun addValue(value: Int)
+    fun getOutput(): List<Int>
+}
+
+open class ListOutputRecorder : OutputRecorder {
+    private val output = mutableListOf<Int>()
+    override fun addValue(value: Int) {
+        output.add(value)
+    }
+
+    override fun getOutput() = output.toList()
+}
+
+object NoInputProvider : InputProvider {
+    override fun getNextInput(): Int {
+        throw NoSuchElementException("No input available")
+    }
+
+    override fun addValue(value: Int) {
+        throw NotImplementedError("Not supported by this input provider")
+    }
+
+    override fun hasNextInput() = false
+}
+
+class ListInputProvider(list: List<Int> = emptyList()) : InputProvider {
+    private var currentInput = 0
+    private var source = list
+
+    override fun getNextInput() = source[currentInput++]
+    override fun addValue(value: Int) {
+        source = source + listOf(value)
+    }
+
+    override fun hasNextInput() = source.size > currentInput
+}
+
+fun List<Int>.asInputProvider() = ListInputProvider(this)
 
 class IntcodeProgramInterpreter(
     val memory: Memory,
     val overrides: Map<Int, Int> = emptyMap(),
-    val inputs: List<Int> = emptyList()
+    val inputs: InputProvider = NoInputProvider,
+    val outputRecorder: OutputRecorder = ListOutputRecorder()
 ) {
-    fun evaluate(): IntcodeProgramResult {
-        val output = mutableListOf<Int>()
+    var executionStatus: ExecutionStatus? = null
 
-        return ExecutionContext(
-            memory.toMutableList().apply {
-                overrides.entries.forEach {
-                    this[it.key] = it.value
+    fun evaluate(): ExecutionStatus {
+        return executionStatus.run {
+            when {
+                this == null -> {
+                    executionStatus = ExecutionContext(
+                        memory.toMutableList().apply {
+                            overrides.entries.forEach {
+                                this[it.key] = it.value
+                            }
+                        }.toList(),
+                        inputs,
+                        outputRecorder,
+                        MemoryAddress(0)
+                    ).evaluate()
+
+                    executionStatus!!
                 }
-            }.toList(),
-            inputs,
-            emptyList(),
-            MemoryAddress(0)
-        ).evaluate()
+                executionState == ExecutionState.COMPLETED -> {
+                    throw IllegalStateException("already completed")
+                }
+                else -> {
+                    executionStatus = executionContext.evaluate()
+                    executionStatus!!
+                }
+            }
+        }
     }
 }
 
+enum class ExecutionState {
+    COMPLETED,
+    HALTED
+}
+
+data class ExecutionStatus(
+    val executionState: ExecutionState,
+    val executionContext: ExecutionContext
+)
+
 data class ExecutionContext(
     val memory: Memory,
-    val inputs: List<Int>,
-    val output: List<Int>,
+    val inputs: InputProvider,
+    val output: OutputRecorder,
     val instructionPointer: MemoryAddress?
 ) {
-    fun evaluate(): IntcodeProgramResult {
+    fun evaluate(): ExecutionStatus {
         return if (instructionPointer == null) {
-            IntcodeProgramResult(
-                memory,
-                output
+            ExecutionStatus(
+                ExecutionState.COMPLETED,
+                this
             )
         } else {
-            IntcodeInstruction.init(instructionPointer.resolve(memory)).execute(this).evaluate()
+            val instruction = IntcodeInstruction.init(instructionPointer.resolve(memory))
+
+            if (instruction.canExecute(this)) {
+                instruction.execute(this).evaluate()
+            } else {
+                ExecutionStatus(
+                    ExecutionState.HALTED,
+                    this
+                )
+            }
+
         }
     }
 }
@@ -85,6 +162,10 @@ sealed class IntcodeInstruction(
     }
 
     abstract fun execute(executionContext: ExecutionContext): ExecutionContext
+    open fun canExecute(executionContext: ExecutionContext): Boolean {
+        return true
+    }
+
     val instructionLength = parameterCount + 1
 
     fun ExecutionContext.getParameters(): List<Parameter> {
@@ -162,11 +243,14 @@ class Input : IntcodeInstruction(1) {
 
         return executionContext.copy(
             memory = executionContext.memory.toMutableList().apply {
-                this[output.value] = executionContext.inputs.first()
+                this[output.value] = executionContext.inputs.getNextInput()
             }.toList(),
-            inputs = executionContext.inputs.drop(1),
             instructionPointer = executionContext.instructionPointer!! + instructionLength
         )
+    }
+
+    override fun canExecute(executionContext: ExecutionContext): Boolean {
+        return executionContext.inputs.hasNextInput()
     }
 }
 
@@ -174,11 +258,9 @@ class Output : IntcodeInstruction(1) {
     override fun execute(executionContext: ExecutionContext): ExecutionContext {
         val (input) = executionContext.getParameters()
 
-        return executionContext.copy(
-            output = executionContext.output.toMutableList().apply {
-                add(executionContext.read(input))
+        executionContext.output.addValue(executionContext.read(input))
 
-            }.toList(),
+        return executionContext.copy(
             instructionPointer = executionContext.instructionPointer!! + instructionLength
         )
     }

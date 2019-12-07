@@ -43,10 +43,10 @@ class IncodeParameterPodeTests {
             DynamicTest.dynamicTest("Diagnostic code ${it.first} results in ${it.second}") {
                 val result = IntcodeProgramInterpreter(
                     memory.convertIntcodeInput(),
-                    inputs = listOf(input.toInt())
+                    inputs = listOf(input.toInt()).asInputProvider()
                 ).evaluate()
 
-                Assertions.assertEquals(it.second, result.output.last())
+                Assertions.assertEquals(it.second, result.executionContext.output.getOutput().last())
             }
         }
 }
