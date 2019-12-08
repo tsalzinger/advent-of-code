@@ -5,6 +5,8 @@ import kotlin.math.abs
 
 fun Double.floor() = kotlin.math.floor(this)
 
+fun <T> List<T>.countOccurrences(value: T) = this.count { it == value }
+
 enum class FileType(val extension: String) {
     IN("in"),
     OUT("out")
