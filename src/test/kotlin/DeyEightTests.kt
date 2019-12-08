@@ -1,7 +1,9 @@
 package me.salzinger
 
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 
 class SpaceImageFormatTests {
@@ -37,4 +39,12 @@ class SpaceImageFormatTests {
                 )
             }
         }
+
+    @Test
+    fun `test image as string`() {
+        assertEquals(
+            "01\n10",
+            "0222112222120000".decodeFromSpaceImageFormat(2, 2).image
+        )
+    }
 }

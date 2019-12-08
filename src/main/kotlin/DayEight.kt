@@ -5,7 +5,35 @@ typealias SpaceImageLayer = List<SpaceImageRow>
 
 fun SpaceImageLayer.countOccurrences(value: Int) = this.flatten().countOccurrences(value)
 
-inline class SpaceImage(val data: List<SpaceImageLayer>) {
+class SpaceImage(
+    val data: List<SpaceImageLayer>,
+    width: Int,
+    height: Int
+) {
+    val image: String by lazy {
+        val result = Array(height) {
+            Array(width) {
+                " "
+            }
+        }
+        data.asReversed()
+            .forEach { layer ->
+                layer.forEachIndexed { rowIndex, rowData ->
+                    result[rowIndex]
+
+                    rowData.forEachIndexed { colIndex, cellData ->
+                        result[rowIndex][colIndex] = when (cellData) {
+                            0 -> "0"// "◼"
+                            1 -> "1" // "◻"
+                            else -> result[rowIndex][colIndex]
+                        }
+                    }
+                }
+            }
+
+        result.joinToString("\n") { it.joinToString("") }
+    }
+
     override fun toString(): String {
         return data.joinToString(",\n") {
             """
@@ -20,7 +48,7 @@ inline class SpaceImage(val data: List<SpaceImageLayer>) {
 fun List<Int>.decodeFromSpaceImageFormat(width: Int, height: Int): SpaceImage {
     return this.chunked(width * height) { layer ->
         layer.chunked(width)
-    }.run { SpaceImage(this) }
+    }.run { SpaceImage(this, width, height) }
 }
 
 fun String.decodeFromSpaceImageFormat(width: Int, height: Int): SpaceImage {
@@ -37,5 +65,11 @@ fun main() {
             .first()
             .run { countOccurrences(1) * countOccurrences(2) }
             .toString()
+    }
+
+    16.solve {
+        this.first()
+            .decodeFromSpaceImageFormat(25, 6)
+            .image
     }
 }
