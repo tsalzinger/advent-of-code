@@ -19,4 +19,14 @@ fun main() {
             .getOutput()
             .joinToString("\n")
     }
+
+    18.solve {
+        first()
+            .convertIntcodeInterpreter(ListInputProvider(listOf(2.toBigInteger())))
+            .evaluate()
+            .executionContext
+            .output
+            .getOutput()
+            .joinToString("\n")
+    }
 }

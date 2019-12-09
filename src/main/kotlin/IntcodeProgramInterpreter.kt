@@ -114,24 +114,30 @@ data class ExecutionContext(
     val relativeBase: Int
 ) {
     fun evaluate(): ExecutionStatus {
-        return if (instructionPointer == null) {
-            ExecutionStatus(
-                ExecutionState.COMPLETED,
-                this
-            )
-        } else {
-            val instruction = IntcodeInstruction.init(instructionPointer.resolve(memory))
+        var currentExecutionContext = this
+        while (true) {
+            with(currentExecutionContext) {
+                if (instructionPointer == null) {
+                    return ExecutionStatus(
+                        ExecutionState.COMPLETED,
+                        this
+                    )
+                } else {
+                    val instruction = IntcodeInstruction.init(instructionPointer.resolve(memory))
 
-            if (instruction.canExecute(this)) {
-                instruction.execute(this).evaluate()
-            } else {
-                ExecutionStatus(
-                    ExecutionState.HALTED,
-                    this
-                )
+                    if (instruction.canExecute(this)) {
+                        currentExecutionContext = instruction.execute(this)
+                    } else {
+                        return ExecutionStatus(
+                            ExecutionState.HALTED,
+                            this
+                        )
+                    }
+
+                }
             }
-
         }
+
     }
 }
 
