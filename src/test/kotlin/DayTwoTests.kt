@@ -10,11 +10,11 @@ class IntcodeTests {
     @Test
     fun `Intcode program interpret`() {
 
-        val memory: Memory = listOf(1, 9, 10, 3, 2, 3, 11, 0, 99, 30, 40, 50)
+        val memory: Memory = listOf(1, 9, 10, 3, 2, 3, 11, 0, 99, 30, 40, 50).toBigIntegerList().toMemory()
 
         val result = interpret(memory, emptyMap()).executionContext.memory
 
-        assertEquals(listOf(3500, 9, 10, 70, 2, 3, 11, 0, 99, 30, 40, 50), result)
+        assertEquals(listOf(3500, 9, 10, 70, 2, 3, 11, 0, 99, 30, 40, 50).toBigIntegerList().toMemory(), result)
 
     }
 
@@ -27,7 +27,10 @@ class IntcodeTests {
             listOf(1,1,1,4,99,5,6,0,99) to listOf(30,1,1,4,2,5,6,0,99)
         ).map {
             DynamicTest.dynamicTest("Intocde program ${it.first} results in ${it.second}") {
-                Assertions.assertEquals(it.second, interpret(it.first, emptyMap()).executionContext.memory)
+                Assertions.assertEquals(
+                    it.second.toBigIntegerList().toMemory(),
+                    interpret(it.first.toBigIntegerList().toMemory(), emptyMap()).executionContext.memory
+                )
             }
         }
 }

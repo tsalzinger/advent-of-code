@@ -1,7 +1,9 @@
 package me.salzinger
 
-fun amplifierChain(phaseSettings: List<Int>, memory: Memory): Int {
-    var output = 0
+import java.math.BigInteger
+
+fun amplifierChain(phaseSettings: List<BigInteger>, memory: Memory): BigInteger {
+    var output = BigInteger.ZERO
 
     for (phaseSetting in phaseSettings) {
         output = IntcodeProgramInterpreter(
@@ -13,19 +15,19 @@ fun amplifierChain(phaseSettings: List<Int>, memory: Memory): Int {
     return output
 }
 
-fun feedbackLoop(phaseSettings: List<Int>, memory: Memory): Int {
+fun feedbackLoop(phaseSettings: List<Int>, memory: Memory): BigInteger {
     val inputProviders: List<InputProvider> = phaseSettings.mapIndexed { index, phaseSetting ->
         ListInputProvider(
             if (index == 0) {
-                listOf(phaseSetting, 0)
+                listOf(phaseSetting, 0).toBigIntegerList()
             } else {
-                listOf(phaseSetting)
+                listOf(phaseSetting).toBigIntegerList()
             }
         )
     }
     val outputRecorders: List<OutputRecorder> = phaseSettings.mapIndexed { index, phaseSetting ->
         object : ListOutputRecorder() {
-            override fun addValue(value: Int) {
+            override fun addValue(value: BigInteger) {
                 super.addValue(value)
                 val nextAmplifierIndex = (index + 1) % phaseSettings.size
                 val nextInputProvider = inputProviders[nextAmplifierIndex]
@@ -53,14 +55,15 @@ fun feedbackLoop(phaseSettings: List<Int>, memory: Memory): Int {
     return executionStatus.executionContext.output.getOutput().last()
 }
 
-fun Memory.getMaxOutput(phases: Int): Int {
-    return (0 until phases).toList().permutate()
+fun Memory.getMaxOutput(phases: Int): BigInteger {
+    return (0 until phases).toList().toBigIntegerList()
+        .permutate()
         .map {
             amplifierChain(it, this)
         }.max()!!
 }
 
-fun Memory.getMaxOutputWithFeedbackLoop(): Int {
+fun Memory.getMaxOutputWithFeedbackLoop(): BigInteger {
     return (5..9).toList().permutate()
         .map {
             feedbackLoop(it, this)

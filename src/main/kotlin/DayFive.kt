@@ -8,7 +8,7 @@ fun main() {
 
 private fun interpret(memory: Memory, input: Int) = IntcodeProgramInterpreter(
     memory,
-    inputs = listOf(input).asInputProvider()
+    inputs = listOf(input).toBigIntegerList().asInputProvider()
 ).evaluate()
 
 private fun solvePuzzle9() {
