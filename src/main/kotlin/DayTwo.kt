@@ -12,7 +12,7 @@ fun String.convertIntcodeInput(): Memory =
         .toMemory()
 
 fun List<BigInteger>.toMemory() =
-    this.mapIndexed { index, value -> index to value }.toMap().withDefault { BigInteger.ZERO }
+    this.mapIndexed { index, value -> index to value }.toMap()
 
 fun interpret(memory: Memory, overrides: Map<Int, Int>): ExecutionStatus {
     return IntcodeProgramInterpreter(memory, overrides.mapValues { (_, value) -> value.toBigInteger() }).evaluate()

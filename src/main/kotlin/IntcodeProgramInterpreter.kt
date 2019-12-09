@@ -4,7 +4,7 @@ import java.math.BigInteger
 
 inline class MemoryAddress(val address: Int) {
     fun resolve(memory: Memory) =
-        memory.getValue(address)
+        memory[address] ?: BigInteger.ZERO
 
     operator fun plus(value: Int) = MemoryAddress(address + value)
 
@@ -78,7 +78,8 @@ class IntcodeProgramInterpreter(
                         }.toMap(),
                         inputs,
                         outputRecorder,
-                        MemoryAddress(0)
+                        MemoryAddress(0),
+                        relativeBase = 0
                     ).evaluate()
 
                     executionStatus!!
@@ -109,7 +110,8 @@ data class ExecutionContext(
     val memory: Memory,
     val inputs: InputProvider,
     val output: OutputRecorder,
-    val instructionPointer: MemoryAddress?
+    val instructionPointer: MemoryAddress?,
+    val relativeBase: Int
 ) {
     fun evaluate(): ExecutionStatus {
         return if (instructionPointer == null) {
@@ -136,24 +138,38 @@ data class ExecutionContext(
 object ParameterModes {
     val POSITION = ParameterMode(0)
     val IMMEDIATE = ParameterMode(1)
+    val RELATIVE = ParameterMode(2)
 }
 
 inline class ParameterMode(val mode: Int) {
-    fun resolve(value: BigInteger, memory: Memory): BigInteger {
+    fun resolve(memoryAddress: MemoryAddress, executionContext: ExecutionContext): MemoryAddress {
         return when (ParameterMode(mode)) {
             ParameterModes.POSITION -> {
-                MemoryAddress(value.toInt()).resolve(memory)
+                MemoryAddress(executionContext.memory.getValue(memoryAddress.address).toInt())
             }
-            ParameterModes.IMMEDIATE -> value
+            ParameterModes.IMMEDIATE -> memoryAddress
+            ParameterModes.RELATIVE -> {
+                MemoryAddress(executionContext.memory.getValue(memoryAddress.address).toInt() + executionContext.relativeBase)
+            }
             else -> throw RuntimeException("Unsupported parameter mode $mode")
         }
     }
 }
 
-class Parameter(
-    val value: BigInteger,
-    val parameterMode: ParameterMode
-)
+data class Parameter(
+    val baseAddress: MemoryAddress,
+    val parameterMode: ParameterMode,
+    val executionContext: ExecutionContext
+) {
+    fun read() =
+        executionContext.memory.getValue(parameterMode.resolve(baseAddress, executionContext).address)
+
+    fun write(value: BigInteger): Memory {
+        return executionContext.memory.toMutableMap().apply {
+            this[parameterMode.resolve(baseAddress, executionContext).address] = value
+        }.toMap()
+    }
+}
 
 sealed class IntcodeInstruction(
     val parameterCount: Int
@@ -181,13 +197,14 @@ sealed class IntcodeInstruction(
         }
     }
 
-    fun ExecutionContext.read(parameter: Parameter) = parameter.parameterMode.resolve(parameter.value, memory)
-
     fun ExecutionContext.resolveParameter(parameterIndex: Int): Parameter {
-        val parameter = memory.getValue(instructionPointer!!.address + parameterIndex + 1)
         val parameterModes = getParameterModes()
 
-        return Parameter(parameter, parameterModes.getOrElse(parameterIndex) { ParameterModes.POSITION })
+        return Parameter(
+            MemoryAddress(instructionPointer!!.address + parameterIndex + 1),
+            parameterModes.getOrElse(parameterIndex) { ParameterModes.POSITION },
+            this
+        )
     }
 
     private fun ExecutionContext.getParameterModes(): List<ParameterMode> {
@@ -207,7 +224,7 @@ sealed class IntcodeInstruction(
                 6 -> JumpIfFalse()
                 7 -> LessThen()
                 8 -> Equals()
-                9 -> TODO("Implement opcode 9")
+                9 -> RelativeBaseOffset()
                 99 -> Return()
                 else -> throw RuntimeException("Unsupported opcode $opcode")
             }
@@ -220,9 +237,7 @@ class Add : IntcodeInstruction(3) {
         val (p1, p2, p3) = executionContext.getParameters()
 
         return executionContext.copy(
-            memory = executionContext.memory.toMutableMap().apply {
-                this[p3.value.toInt()] = executionContext.read(p1) + executionContext.read(p2)
-            }.toMap(),
+            memory = p3.write(p1.read() + p2.read()),
             instructionPointer = executionContext.instructionPointer!! + instructionLength
         )
     }
@@ -233,9 +248,7 @@ class Multiply : IntcodeInstruction(3) {
         val (p1, p2, p3) = executionContext.getParameters()
 
         return executionContext.copy(
-            memory = executionContext.memory.toMutableMap().apply {
-                this[p3.value.toInt()] = executionContext.read(p1) * executionContext.read(p2)
-            }.toMap(),
+            memory = p3.write(p1.read() * p2.read()),
             instructionPointer = executionContext.instructionPointer!! + instructionLength
         )
     }
@@ -246,9 +259,7 @@ class Input : IntcodeInstruction(1) {
         val (output) = executionContext.getParameters()
 
         return executionContext.copy(
-            memory = executionContext.memory.toMutableMap().apply {
-                this[output.value.toInt()] = executionContext.inputs.getNextInput()
-            }.toMap(),
+            memory = output.write(executionContext.inputs.getNextInput()),
             instructionPointer = executionContext.instructionPointer!! + instructionLength
         )
     }
@@ -262,7 +273,7 @@ class Output : IntcodeInstruction(1) {
     override fun execute(executionContext: ExecutionContext): ExecutionContext {
         val (input) = executionContext.getParameters()
 
-        executionContext.output.addValue(executionContext.read(input))
+        executionContext.output.addValue(input.read())
 
         return executionContext.copy(
             instructionPointer = executionContext.instructionPointer!! + instructionLength
@@ -275,8 +286,8 @@ class JumpIfTrue : IntcodeInstruction(2) {
         val (compareTo, jumpTo) = executionContext.getParameters()
 
         return executionContext.copy(
-            instructionPointer = if (executionContext.read(compareTo) != BigInteger.ZERO) {
-                MemoryAddress(executionContext.read(jumpTo).toInt())
+            instructionPointer = if (compareTo.read() != BigInteger.ZERO) {
+                MemoryAddress(jumpTo.read().toInt())
             } else {
                 executionContext.instructionPointer!! + instructionLength
             }
@@ -289,8 +300,8 @@ class JumpIfFalse : IntcodeInstruction(2) {
         val (compareTo, jumpTo) = executionContext.getParameters()
 
         return executionContext.copy(
-            instructionPointer = if (executionContext.read(compareTo) == BigInteger.ZERO) {
-                MemoryAddress(executionContext.read(jumpTo).toInt())
+            instructionPointer = if (compareTo.read() == BigInteger.ZERO) {
+                MemoryAddress(jumpTo.read().toInt())
             } else {
                 executionContext.instructionPointer!! + instructionLength
             }
@@ -303,14 +314,13 @@ class LessThen : IntcodeInstruction(3) {
         val (p1, p2, output) = executionContext.getParameters()
 
         return executionContext.copy(
-            memory = executionContext.memory.toMutableMap().apply {
-                this[output.value.toInt()] = if (executionContext.read(p1) < executionContext.read(p2)) {
+            memory = output.write(
+                if (p1.read() < p2.read()) {
                     BigInteger.ONE
                 } else {
                     BigInteger.ZERO
                 }
-
-            }.toMap(),
+            ),
             instructionPointer = executionContext.instructionPointer!! + instructionLength
         )
     }
@@ -321,14 +331,24 @@ class Equals : IntcodeInstruction(3) {
         val (p1, p2, output) = executionContext.getParameters()
 
         return executionContext.copy(
-            memory = executionContext.memory.toMutableMap().apply {
-                this[output.value.toInt()] = if (executionContext.read(p1) == executionContext.read(p2)) {
+            memory = output.write(
+                if (p1.read() == p2.read()) {
                     BigInteger.ONE
                 } else {
                     BigInteger.ZERO
                 }
+            ),
+            instructionPointer = executionContext.instructionPointer!! + instructionLength
+        )
+    }
+}
 
-            }.toMap(),
+class RelativeBaseOffset : IntcodeInstruction(1) {
+    override fun execute(executionContext: ExecutionContext): ExecutionContext {
+        val (p1) = executionContext.getParameters()
+
+        return executionContext.copy(
+            relativeBase = executionContext.relativeBase + p1.read().toInt(),
             instructionPointer = executionContext.instructionPointer!! + instructionLength
         )
     }
