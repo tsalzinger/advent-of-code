@@ -37,4 +37,39 @@ data class Point(
     val y: Int
 ) {
     fun manhattenDistance(anotherPoint: Point) = abs(x - anotherPoint.x) + abs(y - anotherPoint.y)
+
+    operator fun plus(vector: Vector) = Point(x + vector.dx, y + vector.dy)
+
+    fun vectorTo(other: Point) = Vector(other.x - x, other.y - y)
+}
+
+data class Vector(
+    val dx: Int,
+    val dy: Int
+) {
+    fun scale(factor: Int) = Vector(dx * factor, dy * factor)
+
+    operator fun times(factor: Int) = scale(factor)
+    operator fun div(factor: Int) = Vector(dx / factor, dy / factor)
+
+    fun minimize() = this / ggt(dx, dy)
+}
+
+fun ggt(x: Int = 0, y: Int = 0): Int {
+    var a: Int = abs(x)
+    var b: Int = abs(y)
+
+    if (a == 0) {
+        return b
+    }
+
+    while (b != 0) {
+        if (a > b) {
+            a -= b
+        } else {
+            b -= a
+        }
+    }
+
+    return a
 }
