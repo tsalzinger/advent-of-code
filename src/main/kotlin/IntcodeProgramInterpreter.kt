@@ -126,7 +126,7 @@ data class ExecutionContext(
                     val instruction = IntcodeInstruction.init(instructionPointer.resolve(memory))
 
                     if (instruction.canExecute(this)) {
-                        currentExecutionContext = instruction.execute(this)
+                        currentExecutionContext = instruction.debug(this)
                     } else {
                         return ExecutionStatus(
                             ExecutionState.HALTED,
@@ -182,7 +182,11 @@ sealed class IntcodeInstruction(
 ) {
     fun debug(executionContext: ExecutionContext): ExecutionContext {
         println("$executionContext: ${executionContext.getParameters()}")
-        println(javaClass.simpleName)
+        val memoryData = (0..parameterCount).map {
+            (executionContext.instructionPointer!! + it).address
+        }
+            .map(executionContext.memory::getValue)
+        println("${javaClass.simpleName}(${memoryData.joinToString()}) ${executionContext.getParameters()}")
         return execute(executionContext)
     }
 
