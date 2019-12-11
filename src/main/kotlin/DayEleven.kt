@@ -12,7 +12,7 @@ fun Point.move(direction: Direction, distance: Int = 1) = when (direction) {
 fun Direction.turnLeft() = when (this) {
     Direction.UP -> Direction.LEFT
     Direction.RIGHT -> Direction.UP
-    Direction.DOWN -> Direction.LEFT
+    Direction.DOWN -> Direction.RIGHT
     Direction.LEFT -> Direction.DOWN
 }
 
@@ -54,6 +54,7 @@ fun main() {
 
                         override fun addValue(value: BigInteger) {
                             if (currentOutput == 0) {
+                                paintedPanels.add(currentPosition)
                                 map[currentPosition] = if (value == BigInteger.ZERO) {
                                     PanelColor.BLACK
                                 } else {
@@ -65,7 +66,7 @@ fun main() {
                                 } else {
                                     currentDirection.turnRight()
                                 }
-                                currentPosition.move(currentDirection)
+                                currentPosition = currentPosition.move(currentDirection)
                             }
                             currentOutput = (currentOutput + 1) % 2
                         }

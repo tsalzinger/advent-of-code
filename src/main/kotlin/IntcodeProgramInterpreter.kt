@@ -126,7 +126,7 @@ data class ExecutionContext(
                     val instruction = IntcodeInstruction.init(instructionPointer.resolve(memory))
 
                     if (instruction.canExecute(this)) {
-                        currentExecutionContext = instruction.debug(this)
+                        currentExecutionContext = instruction.execute(this)
                     } else {
                         return ExecutionStatus(
                             ExecutionState.HALTED,
@@ -168,7 +168,7 @@ data class Parameter(
     val executionContext: ExecutionContext
 ) {
     fun read() =
-        executionContext.memory.getValue(parameterMode.resolve(baseAddress, executionContext).address)
+        parameterMode.resolve(baseAddress, executionContext).resolve(executionContext.memory)
 
     fun write(value: BigInteger): Memory {
         return executionContext.memory.toMutableMap().apply {
@@ -186,7 +186,7 @@ sealed class IntcodeInstruction(
             (executionContext.instructionPointer!! + it).address
         }
             .map(executionContext.memory::getValue)
-        println("${javaClass.simpleName}(${memoryData.joinToString()}) ${executionContext.getParameters()}")
+        println("${javaClass.simpleName}(${memoryData.joinToString()})")
         return execute(executionContext)
     }
 
