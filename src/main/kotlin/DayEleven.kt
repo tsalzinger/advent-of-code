@@ -1,6 +1,8 @@
 package me.salzinger
 
 import java.math.BigInteger
+import kotlin.math.max
+import kotlin.math.min
 
 fun Point.move(direction: Direction, distance: Int = 1) = when (direction) {
     Direction.UP -> up(distance)
@@ -23,64 +25,103 @@ enum class PanelColor {
     WHITE
 }
 
+fun <T> Map<Point, T>.print(transform: (T?) -> String): String {
+    var minX = Int.MAX_VALUE
+    var minY = Int.MAX_VALUE
+    var maxX = Int.MIN_VALUE
+    var maxY = Int.MIN_VALUE
+
+    for (key in this.keys) {
+        minX = min(minX, key.x)
+        minY = min(minY, key.y)
+
+        maxX = max(maxX, key.x)
+        maxY = max(maxY, key.y)
+    }
+
+    return (maxY downTo minY).map { y ->
+        (minX..maxX).map { x ->
+            this[Point(x, y)]
+        }.joinToString("", transform = transform::invoke)
+    }.joinToString("\n")
+}
+
+private fun paintHull(panels: Map<Point, PanelColor>, memory: Memory): Map<Point, PanelColor> {
+    var currentPosition = Point(0, 0)
+    var currentDirection = Direction.UP
+    val currentPanels = panels.toMutableMap().withDefault { PanelColor.BLACK }
+
+    IntcodeProgramInterpreter(
+        memory,
+        inputs = object : InputProvider {
+            override fun getNextInput(): BigInteger {
+                return when (currentPanels.getValue(currentPosition)) {
+                    PanelColor.BLACK -> BigInteger.ZERO
+                    PanelColor.WHITE -> BigInteger.ONE
+                }
+            }
+
+            override fun addValue(value: BigInteger) {
+                TODO("not implemented")
+            }
+
+            override fun hasNextInput() = true
+        },
+        outputRecorder = object : OutputRecorder {
+            var currentOutput = 0
+
+            override fun addValue(value: BigInteger) {
+                if (currentOutput == 0) {
+                    currentPanels[currentPosition] = if (value == BigInteger.ZERO) {
+                        PanelColor.BLACK
+                    } else {
+                        PanelColor.WHITE
+                    }
+                } else {
+                    currentDirection = if (value == BigInteger.ZERO) {
+                        currentDirection.turnLeft()
+                    } else {
+                        currentDirection.turnRight()
+                    }
+                    currentPosition = currentPosition.move(currentDirection)
+                }
+                currentOutput = (currentOutput + 1) % 2
+            }
+
+            override fun getOutput(): List<BigInteger> {
+                TODO("not implemented")
+            }
+        }
+    ).evaluate()
+        .run {
+            assert(this.executionState == ExecutionState.COMPLETED)
+        }
+
+    return currentPanels.toMap()
+}
+
 fun main() {
     21.solve {
         first()
             .convertIntcodeInput()
             .run {
-                var currentPosition = Point(0, 0)
-                var currentDirection = Direction.UP
-                val paintedPanels = mutableSetOf<Point>()
-                val map = mutableMapOf<Point, PanelColor>().withDefault { PanelColor.BLACK }
+                paintHull(emptyMap(), this)
+                    .size
+                    .toString()
+            }
+    }
 
-                IntcodeProgramInterpreter(
-                    this,
-                    inputs = object : InputProvider {
-                        override fun getNextInput(): BigInteger {
-                            return when (map.getValue(currentPosition)) {
-                                PanelColor.BLACK -> BigInteger.ZERO
-                                PanelColor.WHITE -> BigInteger.ONE
-                            }
-                        }
-
-                        override fun addValue(value: BigInteger) {
-                            TODO("not implemented")
-                        }
-
-                        override fun hasNextInput() = true
-                    },
-                    outputRecorder = object : OutputRecorder {
-                        var currentOutput = 0
-
-                        override fun addValue(value: BigInteger) {
-                            if (currentOutput == 0) {
-                                paintedPanels.add(currentPosition)
-                                map[currentPosition] = if (value == BigInteger.ZERO) {
-                                    PanelColor.BLACK
-                                } else {
-                                    PanelColor.WHITE
-                                }
-                            } else {
-                                currentDirection = if (value == BigInteger.ZERO) {
-                                    currentDirection.turnLeft()
-                                } else {
-                                    currentDirection.turnRight()
-                                }
-                                currentPosition = currentPosition.move(currentDirection)
-                            }
-                            currentOutput = (currentOutput + 1) % 2
-                        }
-
-                        override fun getOutput(): List<BigInteger> {
-                            TODO("not implemented")
+    22.solve {
+        first()
+            .convertIntcodeInput()
+            .run {
+                paintHull(mapOf(Point(0, 0) to PanelColor.WHITE), this)
+                    .print {
+                        when (it) {
+                            PanelColor.BLACK, null -> " "
+                            PanelColor.WHITE -> "█"
                         }
                     }
-                ).evaluate()
-                    .run {
-                        assert(this.executionState == ExecutionState.COMPLETED)
-                    }
-
-                paintedPanels.size.toString()
             }
     }
 }
