@@ -2,6 +2,7 @@ package me.salzinger
 
 import java.io.File
 import kotlin.math.abs
+import kotlin.math.sqrt
 
 fun Double.floor() = kotlin.math.floor(this)
 
@@ -47,6 +48,27 @@ data class Vector(
     val dx: Int,
     val dy: Int
 ) {
+    val length: Double by lazy {
+        sqrt((dx.toDouble() * dx) + (dy.toDouble() * dy))
+    }
+    val angle: Double by lazy {
+        val radiants = dx.toDouble() / length
+
+        if (dx >= 0 && dy > 0) {
+            2 - radiants
+        } else if (dx < 0 && dy >= 0) {
+            2 - radiants
+        } else if (dx < 0 && dy < 0) {
+            4 + radiants
+        } else {
+            radiants
+        }
+    }
+
+    override fun toString(): String {
+        return "($dx,$dy|${angle})"
+    }
+
     fun scale(factor: Int) = Vector(dx * factor, dy * factor)
 
     operator fun times(factor: Int) = scale(factor)
