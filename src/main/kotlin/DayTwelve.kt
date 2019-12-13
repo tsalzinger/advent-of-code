@@ -5,28 +5,49 @@ import kotlin.math.sign
 
 fun main() {
     23.solve {
-        var moonSystem = toLocations()
-            .map {
-                Moon(
-                    it,
-                    Velocity(0, 0, 0)
-                )
-            }
-            .run(::MoonSystem)
+        var moonSystem = toMoonSystem()
 
         repeat(1000) {
             moonSystem = moonSystem.progress()
         }
 
         moonSystem
-            .moons
-            .map {
-                it.totalEnergy
-            }
-            .sum()
+            .totalEnergy
             .toString()
     }
+
+//    24.solve {
+//        val moonSystem = toMoonSystem
+
+//    moonSystem = MoonSystem(
+//            moonSystem.moons.map {
+//                Moon(
+//                    it.location.run {Location(this.x + 5, this.y - 6, this.z + 11)},
+//                    it.velocity
+//                )
+//            }
+//        )
+//
+//        var currentMoonSystem = moonSystem.progress()
+//        var count = 1
+//        while (currentMoonSystem.totalEnergy != moonSystem.totalEnergy) {
+//            count++
+//            currentMoonSystem = moonSystem.progress()
+//        }
+//
+//        count.toString()
+//    }
 }
+
+fun List<String>.toMoonSystem() =
+    toLocations()
+        .map {
+            Moon(
+                it,
+                Velocity(0, 0, 0)
+            )
+        }
+        .run(::MoonSystem)
 
 fun String.toCoordinatesList(): List<Int> {
     return Regex("<x=(.+), y=(.+), z=(.+)>")
@@ -47,10 +68,20 @@ fun List<String>.toLocations(): List<Location> {
 class MoonSystem(
     val moons: List<Moon>
 ) {
+    val totalEnergy by lazy {
+        moons
+            .map {
+                it.totalEnergy
+            }
+            .sum()
+    }
+
     fun progress(): MoonSystem {
         val newMoons = mutableListOf<Moon>()
+        println("=================")
 
         moons.forEach { moon ->
+            println(moon)
             var currentVelocity = moon.velocity
             moons.forEach { secondMoon ->
                 if (moon != secondMoon) {
