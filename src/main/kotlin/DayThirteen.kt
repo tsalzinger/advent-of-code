@@ -12,15 +12,15 @@ object ArcadeTile {
 }
 
 fun Map<Point, Int>.printArcadeGame() =
-    print {
-        when (it) {
+    print { value, _ ->
+        when (value) {
             ArcadeTile.EMPTY -> " "
             ArcadeTile.WALL -> "█"
             ArcadeTile.BLOCK -> "X"
             ArcadeTile.PADDLE -> "▀"
             ArcadeTile.BALL -> "0"
             null -> "" // unassigned tile below scores
-            else -> "Score: $it\n"
+            else -> "Score: $value\n"
         }
     }
 

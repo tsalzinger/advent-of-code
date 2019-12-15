@@ -43,9 +43,11 @@ object NoInputProvider : InputProvider {
     override fun hasNextInput() = false
 }
 
-class ListInputProvider(list: List<BigInteger> = emptyList()) : InputProvider {
+open class ListInputProvider(list: List<BigInteger> = emptyList()) : InputProvider {
     private var currentInput = 0
     private var source = list
+    val inputs: List<BigInteger>
+        get() = source
 
     override fun getNextInput() = source[currentInput++]
     override fun addValue(value: BigInteger) {

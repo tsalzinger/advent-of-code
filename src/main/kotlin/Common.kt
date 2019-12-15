@@ -42,6 +42,10 @@ data class Point(
     operator fun plus(vector: Vector) = Point(x + vector.dx, y + vector.dy)
 
     fun vectorTo(other: Point) = Vector(other.x - x, other.y - y)
+
+    companion object {
+        val ZERO = Point(0, 0)
+    }
 }
 
 data class Vector(

@@ -25,7 +25,7 @@ enum class PanelColor {
     WHITE
 }
 
-fun <T> Map<Point, T>.print(transform: (T?) -> String): String {
+fun <T> Map<Point, T>.print(transform: (value: T?, position: Point) -> String): String {
     var minX = Int.MAX_VALUE
     var minY = Int.MAX_VALUE
     var maxX = Int.MIN_VALUE
@@ -41,8 +41,9 @@ fun <T> Map<Point, T>.print(transform: (T?) -> String): String {
 
     return (maxY downTo minY).map { y ->
         (minX..maxX).map { x ->
-            this[Point(x, y)]
-        }.joinToString("", transform = transform::invoke)
+            val point = Point(x, y)
+            transform.invoke(this[point], point)
+        }.joinToString("")
     }.joinToString("\n")
 }
 
@@ -116,8 +117,8 @@ fun main() {
             .convertIntcodeInput()
             .run {
                 paintHull(mapOf(Point(0, 0) to PanelColor.WHITE), this)
-                    .print {
-                        when (it) {
+                    .print { value, _ ->
+                        when (value) {
                             PanelColor.BLACK, null -> " "
                             PanelColor.WHITE -> "█"
                         }
