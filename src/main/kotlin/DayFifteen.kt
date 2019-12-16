@@ -37,6 +37,16 @@ object DroidMovement {
     val EAST: DroidMovementCode = 4.toBigInteger()
     val SOUTH: DroidMovementCode = BigInteger.TWO
     val WEST: DroidMovementCode = 3.toBigInteger()
+
+    val ALL = listOf(NORTH, EAST, SOUTH, WEST)
+
+    fun invert(movementCode: DroidMovementCode) = when (movementCode) {
+        NORTH -> SOUTH
+        EAST -> WEST
+        SOUTH -> NORTH
+        WEST -> EAST
+        else -> throw RuntimeException("Unkown movment code $movementCode")
+    }
 }
 
 object DroidStatusCodes {
@@ -53,12 +63,12 @@ class Environment(
 ) {
     val revealed: Boolean
         get() {
-            return map.map { it.value.neighbors.size }.min()!! == 4
+            return map.filterValues { it.droidStatusCode != DroidStatusCodes.WALL_HIT }.map { it.value.neighbors.size }.min()!! == 4
         }
     val statusAtCurrentPosition
         get() = map.getValue(repairDroid.position)
 
-    private val map = mutableMapOf(
+    val map = mutableMapOf(
         repairDroid.position to EnvironmentStatus(
             repairDroid.position,
             DroidStatusCodes.CONFIRMED,
@@ -122,20 +132,32 @@ class Environment(
 
         private fun updateDistance(distance: Int) {
             if (distance < this.distance) {
-                val diff = this.distance - distance
+                val oldDistance = this.distance
+                val diff = oldDistance - distance
                 this.distance = distance
-                neighbors.values.forEach { it.updateDistance(it.distance - diff) }
+                if (droidStatusCode != DroidStatusCodes.WALL_HIT) {
+                    neighbors.values.forEach {
+                        if (it.distance > oldDistance) {
+                            it.updateDistance(it.distance - diff)
+                        }
+                    }
+                }
             }
         }
 
-        fun hasNeighborAt(droidMovementCode: DroidMovementCode) {
-            when (droidMovementCode) {
+        fun hasNeighborAt(droidMovementCode: DroidMovementCode): Boolean {
+            return when (droidMovementCode) {
                 DroidMovement.NORTH -> neighbors.containsKey(position.up(1))
                 DroidMovement.EAST -> neighbors.containsKey(position.right(1))
                 DroidMovement.SOUTH -> neighbors.containsKey(position.down(1))
                 DroidMovement.WEST -> neighbors.containsKey(position.left(1))
                 else -> throw RuntimeException("Unsupported movement code $droidMovementCode")
             }
+        }
+
+        fun getDirectionOfUnknownNeighbor(): DroidMovementCode? {
+            return DroidMovement.ALL
+                .find { !hasNeighborAt(it) }
         }
     }
 }
@@ -170,29 +192,42 @@ class RepairDroid {
 class AutoReveal(private val environment: Environment) : ListInputProvider() {
     var lastPosition: Point? = null
     var commands = mutableListOf<DroidMovementCode>()
+    var lastCommand: DroidMovementCode? = null
 
     override fun getNextInput(): BigInteger {
         if (environment.repairDroid.position != lastPosition) {
             // we are at a new position
             lastPosition = environment.repairDroid.position
 
-
-            // try to go north
-            return DroidMovement.NORTH.also { commands.add(it) }
+            return tryNext()
         } else {
-            // we hit a wall
-            commands.dropLast(1)
-            var nextDirection = environment.repairDroid.lastMovementCommand + BigInteger.ONE
-            if (nextDirection > 4.toBigInteger()) {
-                // we exhausted this
+            // we hit a wall drop the last command
+            commands.removeAt(commands.size - 1)
+            return tryNext()
+        }
+    }
+
+    private fun tryNext(): DroidMovementCode {
+        val directionOfUnknownNeighbor = environment
+            .statusAtCurrentPosition
+            .getDirectionOfUnknownNeighbor()
+            ?.also {
+                commands.add(it)
             }
 
-        }
+        return (directionOfUnknownNeighbor ?: backtrack())
+            .also {
+                addValue(it)
+                lastCommand = it
+            }
+    }
 
+    private fun backtrack(): DroidMovementCode {
+        return DroidMovement.invert(commands.removeAt(commands.size - 1))
     }
 
     override fun hasNextInput(): Boolean {
-        return !environment.revealed
+        return inputs.isEmpty() || !commands.isEmpty()//!environment.revealed
     }
 }
 
@@ -216,21 +251,25 @@ fun main() {
                     override fun addValue(value: BigInteger) {
                         super.addValue(value)
                         environment.recordStatusReport(
-                            movementCommand = inputProvider.lastInput,
+                            movementCommand = autoReveal.lastCommand!!,
                             statusCode = value
                         )
-                        println(inputProvider.inputs)
-                        println(environment)
                     }
                 }
 
                 IntcodeProgramInterpreter(
                     memory = this,
-                    inputs = inputProvider,
+                    inputs = autoReveal,//inputProvider,
                     outputRecorder = outputRecorder
-                ).evaluate().run {
-                    assert(this.executionState == ExecutionState.COMPLETED)
-                }
+                ).evaluate()
+
+                println(environment)
+
+                environment
+                    .map
+                    .values
+                    .first { it.droidStatusCode == DroidStatusCodes.OXYGEN_SYSTEM }
+                    .distance
             }
             .toString()
     }
