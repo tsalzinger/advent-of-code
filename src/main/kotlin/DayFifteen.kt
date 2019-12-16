@@ -76,6 +76,13 @@ class Environment(
         )
     )
 
+    fun spreadOxygen(): Int {
+        return map
+            .values
+            .first { it.droidStatusCode == DroidStatusCodes.OXYGEN_SYSTEM }
+            .spreadOxygen(0)
+    }
+
     fun recordStatusReport(
         movementCommand: DroidMovementCode,
         statusCode: DroidStatusCode
@@ -120,6 +127,7 @@ class Environment(
         val droidStatusCode: DroidStatusCode,
         var distance: Int
     ) {
+        var floodedWithOxygen = false
         val neighbors = mutableMapOf<Point, EnvironmentStatus>()
         fun addNeighbor(environmentStatus: EnvironmentStatus) {
             if ((environmentStatus.distance + 1) < distance) {
@@ -159,6 +167,19 @@ class Environment(
             return DroidMovement.ALL
                 .find { !hasNeighborAt(it) }
         }
+
+        fun spreadOxygen(duration: Int): Int {
+            floodedWithOxygen = true
+            return neighbors
+                .values
+                .filter {
+                    !it.floodedWithOxygen && it.droidStatusCode != DroidStatusCodes.WALL_HIT
+                }
+                .map {
+                    it.spreadOxygen(duration + 1)
+                }
+                .max() ?: duration
+        }
     }
 }
 
@@ -189,21 +210,24 @@ class RepairDroid {
     }
 }
 
-class AutoReveal(private val environment: Environment) : ListInputProvider() {
+interface DroneInputProvider : InputProvider {
+    var lastCommand: DroidMovementCode?
+}
+
+class AutoReveal(private val environment: Environment) : DroneInputProvider, ListInputProvider() {
     var lastPosition: Point? = null
     var commands = mutableListOf<DroidMovementCode>()
-    var lastCommand: DroidMovementCode? = null
+    override var lastCommand: DroidMovementCode? = null
 
     override fun getNextInput(): BigInteger {
-        if (environment.repairDroid.position != lastPosition) {
+        return if (environment.repairDroid.position != lastPosition) {
             // we are at a new position
             lastPosition = environment.repairDroid.position
-
-            return tryNext()
+            tryNext()
         } else {
             // we hit a wall drop the last command
             commands.removeAt(commands.size - 1)
-            return tryNext()
+            tryNext()
         }
     }
 
@@ -231,22 +255,39 @@ class AutoReveal(private val environment: Environment) : ListInputProvider() {
     }
 }
 
+class EnvironmentOutputRecorder(
+    private val environment: Environment,
+    private val inputProvider: DroneInputProvider
+) :
+    ListOutputRecorder() {
+    override fun addValue(value: BigInteger) {
+        super.addValue(value)
+        environment.recordStatusReport(
+            movementCommand = inputProvider.lastCommand!!,
+            statusCode = value
+        )
+    }
+}
+
+val consoleInputProvider = ConsoleInputProvider {
+    when (it) {
+        "8" -> DroidMovement.NORTH
+        "6" -> DroidMovement.EAST
+        "2" -> DroidMovement.SOUTH
+        "4" -> DroidMovement.WEST
+        else -> throw ConsoleInputProvider.InvalidInputException()
+    }
+}
+
 fun main() {
+    var oxygenSystemLocation: Point? = null
+
     29.solve {
         first()
             .convertIntcodeInput()
             .run {
                 val environment = Environment()
                 val autoReveal = AutoReveal(environment)
-                val inputProvider = ConsoleInputProvider {
-                    when (it) {
-                        "8" -> DroidMovement.NORTH
-                        "6" -> DroidMovement.EAST
-                        "2" -> DroidMovement.SOUTH
-                        "4" -> DroidMovement.WEST
-                        else -> throw ConsoleInputProvider.InvalidInputException()
-                    }
-                }
                 val outputRecorder = object : ListOutputRecorder() {
                     override fun addValue(value: BigInteger) {
                         super.addValue(value)
@@ -265,11 +306,37 @@ fun main() {
 
                 println(environment)
 
-                environment
+                val oxygenSystemDistance = environment
                     .map
                     .values
                     .first { it.droidStatusCode == DroidStatusCodes.OXYGEN_SYSTEM }
+                    .apply {
+                        oxygenSystemLocation = position
+                    }
                     .distance
+                oxygenSystemDistance
+            }
+            .toString()
+    }
+
+    30.solve {
+        first()
+            .convertIntcodeInput()
+            .run {
+                val environment = Environment()
+                val autoReveal = AutoReveal(environment)
+                val outputRecorder = EnvironmentOutputRecorder(
+                    environment,
+                    autoReveal
+                )
+
+                IntcodeProgramInterpreter(
+                    memory = this,
+                    inputs = autoReveal,
+                    outputRecorder = outputRecorder
+                ).evaluate()
+
+                environment.spreadOxygen()
             }
             .toString()
     }
