@@ -25,7 +25,7 @@ enum class PanelColor {
     WHITE
 }
 
-fun <T> Map<Point, T>.print(transform: (value: T?, position: Point) -> String): String {
+fun <T> Map<Point, T>.print(transform: (value: T?, position: Point) -> String = { value, _ -> value.toString() }): String {
     var minX = Int.MAX_VALUE
     var minY = Int.MAX_VALUE
     var maxX = Int.MIN_VALUE
