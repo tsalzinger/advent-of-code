@@ -13,13 +13,20 @@ enum class FileType(val extension: String) {
     OUT("out")
 }
 
-fun getFile(level: Int, fileType: FileType) = File("src/main/resources/puzzle-$level.${fileType.extension}")
+fun getFile(level: Int, part: Int?, fileType: FileType) =
+    File("src/main/resources/puzzle-$level${part?.run { "-$this" } ?: ""}.${fileType.extension}")
 
-fun getNextInput(puzzle: Int) =
-    getFile(puzzle, FileType.IN)
+fun getNextInput(puzzle: Int, part: Int? = null) =
+    getFile(puzzle, part, FileType.IN)
         .readLines()
         .map(String::trim)
         .filter(String::isNotEmpty)
+
+fun Int.solve(part: Int, solver: List<String>.() -> String) {
+    getNextInput(this, part)
+        .solver()
+        .writePuzzleSolution(this, part)
+}
 
 fun Int.solve(solver: List<String>.() -> String) {
     getNextInput(this)
@@ -27,11 +34,10 @@ fun Int.solve(solver: List<String>.() -> String) {
         .writePuzzleSolution(this)
 }
 
-fun <T> List<T>.writePuzzleSolution(level: Int) =
-    getFile(level, FileType.OUT).writeText(joinToString("\n"))
+fun <T> List<T>.writePuzzleSolution(level: Int, part: Int?) =
+    getFile(level, part, FileType.OUT).writeText(joinToString("\n"))
 
-fun Int.writePuzzleSolution(level: Int) = listOf(this).writePuzzleSolution(level)
-fun String.writePuzzleSolution(level: Int) = listOf(this).writePuzzleSolution(level)
+fun String.writePuzzleSolution(level: Int, part: Int? = null) = listOf(this).writePuzzleSolution(level, part)
 
 data class Point(
     val x: Int,
