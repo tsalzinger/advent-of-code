@@ -1,7 +1,7 @@
 package me.salzinger
 
 data class Submarine(
-    val position: Position = Position(0, 0)
+    val position: Position = Position()
 )
 
 fun Submarine.executeCommand(command: Command): Submarine {
@@ -11,8 +11,9 @@ fun Submarine.executeCommand(command: Command): Submarine {
 }
 
 data class Position(
-    val horizontal: Int,
-    val depth: Int
+    val horizontal: Int = 0,
+    val depth: Int = 0,
+    val aim: Int = 0,
 )
 
 sealed interface Command {
@@ -24,7 +25,8 @@ sealed interface Command {
     ) : Command {
         override fun invoke(position: Position): Position {
             return position.copy(
-                horizontal = position.horizontal + amount
+                horizontal = position.horizontal + amount,
+                depth = position.depth + position.aim * amount,
             )
         }
     }
@@ -34,7 +36,7 @@ sealed interface Command {
     ) : Command {
         override fun invoke(position: Position): Position {
             return position.copy(
-                depth = position.depth + amount
+                aim = position.aim + amount
             )
         }
     }
@@ -44,7 +46,7 @@ sealed interface Command {
     ) : Command {
         override fun invoke(position: Position): Position {
             return position.copy(
-                depth = position.depth - amount
+                aim = position.aim - amount
             )
         }
     }
