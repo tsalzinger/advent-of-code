@@ -105,3 +105,7 @@ fun ggt(x: Int = 0, y: Int = 0): Int {
 
     return a
 }
+
+fun ByteArray.toInt(): Int {
+    return joinToString("").toInt(2)
+}
