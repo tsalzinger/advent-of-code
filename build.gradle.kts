@@ -1,8 +1,7 @@
 import org.gradle.api.tasks.testing.logging.TestLogEvent
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.3.61"
+    kotlin("jvm") version "1.6.0"
 }
 
 group = "me.salzinger"
@@ -13,17 +12,16 @@ repositories {
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-    testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
+}
+
+kotlin {
+    jvmToolchain {
+        (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(17))
+    }
 }
 
 tasks {
-    compileKotlin {
-        kotlinOptions.jvmTarget = "12"
-    }
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = "12"
-    }
     test {
         useJUnitPlatform()
         testLogging {
@@ -34,8 +32,4 @@ tasks {
             )
         }
     }
-}
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    freeCompilerArgs = listOf("-Xinline-classes")
 }
