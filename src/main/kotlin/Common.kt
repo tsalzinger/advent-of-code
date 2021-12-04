@@ -20,12 +20,20 @@ fun getNextInput(puzzle: Int, part: Int? = null) =
     getFile(puzzle, part, FileType.IN)
         .readLines()
         .map(String::trim)
-        .filter(String::isNotEmpty)
+        .filter(String::isNotBlank)
 
 fun Int.solve(part: Int, solver: List<String>.() -> String) {
     getNextInput(this, part)
         .solver()
         .writePuzzleSolution(this, part)
+}
+
+fun String.toIntList(vararg delimiters: String = arrayOf(",")): List<Int> {
+    return split(delimiters = delimiters).map { it.toInt() }
+}
+
+fun String.toIntList(regex: Regex): List<Int> {
+    return split(regex = regex).map { it.toInt() }
 }
 
 fun Int.solve(solver: List<String>.() -> String) {
