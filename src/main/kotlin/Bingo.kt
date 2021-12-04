@@ -1,6 +1,6 @@
 package me.salzinger
 
-class BingoPlayer(
+class BingoWinningPlayer(
     private val initialGame: Bingo
 ) {
     fun getWinningScore(): Long {
@@ -15,6 +15,31 @@ class BingoPlayer(
         }
 
         throw IllegalStateException("No winning board available")
+    }
+}
+
+class BingoLoosingPlayer(
+    private val initialGame: Bingo
+) {
+    fun getLoosingScore(): Long {
+        var currentGame = initialGame
+        while (currentGame.remainingDraws.isNotEmpty()) {
+            val lastDraw = currentGame.nextDraw
+            currentGame = currentGame.advance()
+
+            if (currentGame.boards.size == 1) {
+                if (currentGame.bingo) {
+                    return currentGame.winningBoard.getScore(lastDraw)
+                }
+            } else {
+                currentGame = currentGame.copy(
+                    boards = currentGame.boards.filter { !it.bingo }
+                )
+            }
+
+        }
+
+        throw IllegalStateException("No loosing board available")
     }
 }
 

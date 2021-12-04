@@ -1,9 +1,9 @@
 package me.salzinger
 
 fun main() {
-    4.solve(1) {
+    4.solve(2) {
         val initialGame = BingoParser.parse(this)
 
-        BingoWinningPlayer(initialGame).getWinningScore().toString()
+        BingoLoosingPlayer(initialGame).getLoosingScore().toString()
     }
 }
