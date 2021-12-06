@@ -4,33 +4,36 @@ data class Line(
     val start: Point,
     val end: Point,
 ) {
+    private fun progressionOf(v1: Int, v2: Int): IntProgression {
+        return if (v1 < v2) {
+            v1..v2
+        } else {
+            v1 downTo v2
+        }
+    }
+
     fun mapToPoints(): List<Point> {
         return when {
             start.x == end.x -> {
-                val startY = start.y
-                val endY = end.y
-
-                if (startY < endY) {
-                    startY..endY
-                } else {
-                    startY downTo endY
-                }.map { y ->
-                    Point(start.x, y)
-                }
+                progressionOf(start.y, end.y)
+                    .map { y ->
+                        Point(start.x, y)
+                    }
             }
             start.y == end.y -> {
-                val startX = start.x
-                val endX = end.x
+                progressionOf(start.x, end.x)
+                    .map { x ->
+                        Point(x, start.y)
+                    }
+            }
+            else -> {
+                val xValues = progressionOf(start.x, end.x)
+                val yValues = progressionOf(start.y, end.y).toList()
 
-                if (startX < endX) {
-                    startX..endX
-                } else {
-                    startX downTo endX
-                }.map { y ->
-                    Point(y, start.y)
+                xValues.mapIndexed { index, x ->
+                    Point(x, yValues[index])
                 }
             }
-            else -> emptyList()
         }
     }
 
