@@ -117,3 +117,51 @@ fun ggt(x: Int = 0, y: Int = 0): Int {
 fun ByteArray.toInt(): Int {
     return joinToString("").toInt(2)
 }
+
+class Grid<T>(values: List<List<T>>) : Iterable<Grid.Cell<T>> {
+    private val cells = values.flatMapIndexed { rowIndex, rowValues ->
+        rowValues.mapIndexed { columnIndex, value ->
+            val coordinate = Coordinate(rowIndex, columnIndex)
+            coordinate to Cell(coordinate, value)
+        }
+    }.toMap()
+
+    data class Cell<T>(val coordinate: Coordinate, val value: T)
+
+    data class Coordinate(val row: Int, val column: Int) {
+        fun up() = copy(row = row - 1)
+        fun right() = copy(column = column + 1)
+        fun down() = copy(row = row + 1)
+        fun left() = copy(column = column - 1)
+
+        fun getNeighbors(): Set<Coordinate> {
+            return setOf(
+                up(),
+                right(),
+                down(),
+                left(),
+            )
+        }
+    }
+
+    fun getCellAt(coordinate: Coordinate): Cell<T> {
+        return cells.getValue(coordinate)
+    }
+
+    fun getNeighborsOf(coordinate: Coordinate): Set<Cell<T>> {
+        return coordinate
+            .getNeighbors()
+            .mapNotNull {
+                cells[it]
+            }
+            .toSet()
+    }
+
+    fun getNeighborsOf(cell: Cell<T>): Set<Cell<T>> {
+        return getNeighborsOf(cell.coordinate)
+    }
+
+    override fun iterator(): Iterator<Cell<T>> {
+        return cells.values.iterator()
+    }
+}
