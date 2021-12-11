@@ -118,29 +118,67 @@ fun ByteArray.toInt(): Int {
     return joinToString("").toInt(2)
 }
 
-class Grid<T>(values: List<List<T>>) : Iterable<Grid.Cell<T>> {
+class Grid<T>(values: List<List<T>>, private val neighborProvider: (Coordinate.() -> Set<Coordinate>)? = null) :
+    Iterable<Grid.Cell<T>> {
+    val rows = values.count()
+    val columns = values.firstOrNull()?.count() ?: 0
     private val cells = values.flatMapIndexed { rowIndex, rowValues ->
         rowValues.mapIndexed { columnIndex, value ->
-            val coordinate = Coordinate(rowIndex, columnIndex)
+            val coordinate = if (neighborProvider != null) {
+                Coordinate(
+                    rowIndex,
+                    columnIndex,
+                    neighborProvider,
+                )
+            } else {
+                Coordinate(rowIndex, columnIndex)
+            }
             coordinate to Cell(coordinate, value)
         }
     }.toMap()
 
     data class Cell<T>(val coordinate: Coordinate, val value: T)
 
-    data class Coordinate(val row: Int, val column: Int) {
+    fun transformValues(transformer: (Grid.Cell<T>) -> T): Grid<T> {
+        return Grid(
+            values = map(transformer).chunked(columns),
+            neighborProvider = neighborProvider,
+        )
+    }
+
+    data class Coordinate(
+        val row: Int,
+        val column: Int,
+        private val neighborProvider: Coordinate.() -> Set<Coordinate> = NeighborModes.CROSS,
+    ) {
         fun up() = copy(row = row - 1)
         fun right() = copy(column = column + 1)
         fun down() = copy(row = row + 1)
         fun left() = copy(column = column - 1)
 
-        fun getNeighbors(): Set<Coordinate> {
-            return setOf(
-                up(),
-                right(),
-                down(),
-                left(),
-            )
+        fun getNeighbors(): Set<Coordinate> = neighborProvider()
+
+        object NeighborModes {
+            val CROSS: Coordinate.() -> Set<Coordinate> = {
+                setOf(
+                    up(),
+                    right(),
+                    down(),
+                    left(),
+                )
+            }
+            val RING: Coordinate.() -> Set<Coordinate> = {
+                setOf(
+                    up(),
+                    up().right(),
+                    right(),
+                    right().down(),
+                    down(),
+                    down().left(),
+                    left(),
+                    left().up(),
+                )
+            }
         }
     }
 
