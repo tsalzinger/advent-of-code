@@ -22,6 +22,16 @@ fun getNextInput(puzzle: Int, part: Int? = null) =
         .map(String::trim)
         .filter(String::isNotBlank)
 
+fun Int.solveExample(expectedSolution: String, solver: List<String>.() -> String) {
+    getNextInput(this, 0)
+        .solver()
+        .also { solution ->
+            check(solution == expectedSolution) {
+                "Expected $expectedSolution but got $solution"
+            }
+        }
+}
+
 fun Int.solve(part: Int, solver: List<String>.() -> String) {
     getNextInput(this, part)
         .solver()
