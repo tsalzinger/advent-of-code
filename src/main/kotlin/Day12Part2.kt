@@ -1,41 +1,35 @@
 package me.salzinger
 
-sealed interface Cave {
-    val id: String
-    val connectedCaves: MutableSet<Cave>
-
-    class Big(
-        override val id: String, override val connectedCaves: MutableSet<Cave> = mutableSetOf()
-    ) : Cave
-
-    class Small(
-        override val id: String, override val connectedCaves: MutableSet<Cave> = mutableSetOf()
-    ) : Cave
-}
-
-private class Path(
+private class CavePath(
     val caves: List<Cave>,
 ) {
     private val end = caves.last()
-    private val smallCaves = caves.filterIsInstance<Cave.Small>().toSet()
+    private val smallCaves = caves.filterIsInstance<Cave.Small>()
+    private val hasSmallCaveCircle = smallCaves
+        .groupBy { it }
+        .mapValues { it.value.count() }
+        .values
+        .any { it == 2 }
 
     override fun toString(): String {
         return caves.joinToString("-") { it.id }
     }
 
-    fun extendTo(cave: Cave): Path {
+    fun extendTo(cave: Cave): CavePath {
         require(canExtendTo(cave))
 
-        return Path(
+        return CavePath(
             caves + cave
         )
     }
 
     fun canExtendTo(cave: Cave): Boolean {
-        return cave in end.connectedCaves && cave !in smallCaves
+        return cave.id != "start" &&
+            cave in end.connectedCaves
+            && (cave !in smallCaves || !hasSmallCaveCircle)
     }
 
-    fun extendUntil(targetCave: Cave): Set<Path> {
+    fun extendUntil(targetCave: Cave): Set<CavePath> {
         if (end == targetCave) {
             return setOf(this)
         }
@@ -68,17 +62,17 @@ private fun List<String>.solve(): String {
     val endCave = caves.getValue("end")
 
     val paths = startCave.connectedCaves.flatMap {
-        Path(listOf(startCave, it)).extendUntil(endCave)
+        CavePath(listOf(startCave, it)).extendUntil(endCave)
     }
 
     return paths.count().toString()
 }
 
 fun main() {
-    12.solveExample(1, "10", List<String>::solve)
-    12.solveExample(2, "19", List<String>::solve)
-    12.solveExample(3, "226", List<String>::solve)
+    12.solveExample(1, "36", List<String>::solve)
+    12.solveExample(2, "103", List<String>::solve)
+    12.solveExample(3, "3509", List<String>::solve)
 
-    12.solve(1, List<String>::solve)
+    12.solve(2, List<String>::solve)
 }
 
