@@ -16,7 +16,16 @@ enum class FileType(val extension: String) {
 fun getFile(level: Int, part: Int?, fileType: FileType) =
     File("src/main/resources/puzzle-$level${part?.run { "-$this" } ?: ""}.${fileType.extension}")
 
+fun getFile(level: Int, part: String, fileType: FileType) =
+    File("src/main/resources/puzzle-$level-$part.${fileType.extension}")
+
 fun getNextInput(puzzle: Int, part: Int? = null) =
+    getFile(puzzle, part, FileType.IN)
+        .readLines()
+        .map(String::trim)
+        .filter(String::isNotBlank)
+
+fun getNextInput(puzzle: Int, part: String) =
     getFile(puzzle, part, FileType.IN)
         .readLines()
         .map(String::trim)
@@ -24,6 +33,16 @@ fun getNextInput(puzzle: Int, part: Int? = null) =
 
 fun Int.solveExample(expectedSolution: String, solver: List<String>.() -> String) {
     getNextInput(this, 0)
+        .solver()
+        .also { solution ->
+            check(solution == expectedSolution) {
+                "Expected $expectedSolution but got $solution"
+            }
+        }
+}
+
+fun Int.solveExample(exampleNumber: Int, expectedSolution: String, solver: List<String>.() -> String) {
+    getNextInput(this, "example-$exampleNumber")
         .solver()
         .also { solution ->
             check(solution == expectedSolution) {
