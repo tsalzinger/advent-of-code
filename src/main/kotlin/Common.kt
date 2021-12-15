@@ -149,7 +149,10 @@ fun ByteArray.toInt(): Int {
     return joinToString("").toInt(2)
 }
 
-class Grid<T>(values: List<List<T>>, private val neighborProvider: (Coordinate.() -> Set<Coordinate>)? = null) :
+class Grid<T>(
+    values: List<List<T>>,
+    private val neighborProvider: (Coordinate.() -> Set<Coordinate>) = Coordinate.NeighborModes.CROSS
+) :
     Iterable<Grid.Cell<T>> {
     val rows = values.count()
     val columns = values.firstOrNull()?.count() ?: 0
@@ -159,7 +162,6 @@ class Grid<T>(values: List<List<T>>, private val neighborProvider: (Coordinate.(
                 Coordinate(
                     rowIndex,
                     columnIndex,
-                    neighborProvider,
                 )
             } else {
                 Coordinate(rowIndex, columnIndex)
@@ -180,14 +182,13 @@ class Grid<T>(values: List<List<T>>, private val neighborProvider: (Coordinate.(
     data class Coordinate(
         val row: Int,
         val column: Int,
-        private val neighborProvider: Coordinate.() -> Set<Coordinate> = NeighborModes.CROSS,
     ) {
         fun up() = copy(row = row - 1)
         fun right() = copy(column = column + 1)
         fun down() = copy(row = row + 1)
         fun left() = copy(column = column - 1)
 
-        fun getNeighbors(): Set<Coordinate> = neighborProvider()
+        fun getNeighbors(neighborProvider: Coordinate.() -> Set<Coordinate>): Set<Coordinate> = neighborProvider()
 
         object NeighborModes {
             val CROSS: Coordinate.() -> Set<Coordinate> = {
@@ -219,7 +220,7 @@ class Grid<T>(values: List<List<T>>, private val neighborProvider: (Coordinate.(
 
     fun getNeighborsOf(coordinate: Coordinate): Set<Cell<T>> {
         return coordinate
-            .getNeighbors()
+            .getNeighbors(neighborProvider)
             .mapNotNull {
                 cells[it]
             }
@@ -232,5 +233,11 @@ class Grid<T>(values: List<List<T>>, private val neighborProvider: (Coordinate.(
 
     override fun iterator(): Iterator<Cell<T>> {
         return cells.values.iterator()
+    }
+}
+
+fun <T> Grid<T>.toConsoleString(transform: ((Grid.Cell<T>) -> String)? = null): String {
+    return chunked(columns).joinToString("\n") { row ->
+        row.joinToString(separator = "", transform = transform)
     }
 }
