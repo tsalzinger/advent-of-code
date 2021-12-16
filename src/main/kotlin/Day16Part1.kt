@@ -39,7 +39,7 @@ private fun List<Bit>.rangeToInt(from: Int = 0, length: Int): Int {
     return subList(from, from + length).joinToString("").toInt(radix = 2)
 }
 
-private object SegmentLength {
+object SegmentLength {
     val SUB_PACKET_LENGTH = 15
     val SUB_PACKET_COUNT = 11
     val VERSION = 3
