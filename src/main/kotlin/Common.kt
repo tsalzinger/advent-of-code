@@ -53,6 +53,19 @@ fun Int.solveExample(exampleNumber: Int, expectedSolution: String, solver: List<
         }
 }
 
+fun Int.solveExamples(
+    expectedSolutions: List<String>,
+    solver: List<String>.() -> String
+) {
+    expectedSolutions.forEachIndexed { exampleIndex, expectedSolution ->
+        solveExample(
+            exampleNumber = exampleIndex + 1,
+            expectedSolution = expectedSolution,
+            solver = solver
+        )
+    }
+}
+
 fun Int.solve(part: Int, solver: List<String>.() -> String) {
     getNextInput(this, part)
         .solver()
