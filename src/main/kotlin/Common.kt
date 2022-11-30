@@ -58,8 +58,10 @@ fun Int.solveExamples(
     solver: List<String>.() -> String
 ) {
     expectedSolutions.forEachIndexed { exampleIndex, expectedSolution ->
+        val exampleNumber = exampleIndex + 1
+        println("Solving example $exampleNumber")
         solveExample(
-            exampleNumber = exampleIndex + 1,
+            exampleNumber = exampleNumber,
             expectedSolution = expectedSolution,
             solver = solver
         )

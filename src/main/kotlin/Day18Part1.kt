@@ -1,186 +1,222 @@
 package me.salzinger
 
 import java.util.*
+import kotlin.math.ceil
+import kotlin.math.floor
 
-sealed interface SnailNumber {
-    val magnitude: Long
-
-    fun sum(snailNumber: SnailNumber): SnailNumber
-    fun explode(): SnailNumber.Pair
-    fun reduce(): SnailNumber.Pair
-    fun split(): SnailNumber.Pair
-
-    @JvmInline
-    value class Regular(val number: Long) : SnailNumber {
-        override val magnitude: Long
-            get() = number
-
-        override fun sum(snailNumber: SnailNumber): SnailNumber {
-            TODO("Regular number cannot be summed up")
-        }
-
-        override fun explode(): SnailNumber.Pair {
-            TODO("Regular number cannot be summed up")
-        }
-
-        override fun reduce(): SnailNumber.Pair {
-            TODO("Regular number cannot be summed up")
-        }
-
-        override fun split(): SnailNumber.Pair {
-            TODO("Regular number cannot be summed up")
-        }
-
+sealed interface SnailNumberToken {
+    object PairStart : SnailNumberToken {
         override fun toString(): String {
-            return "$number"
+            return "["
         }
     }
 
-    data class Pair(val left: SnailNumber, val right: SnailNumber) : SnailNumber {
-        override val magnitude: Long
-            get() = (3 * left.magnitude + 2 * right.magnitude)
+    object PairEnd : SnailNumberToken {
+        override fun toString(): String {
+            return "]"
+        }
+    }
 
-        operator fun plus(snailNumber: SnailNumber): SnailNumber {
-            return SnailNumber.Pair(this, snailNumber)
+    object Separator : SnailNumberToken {
+        override fun toString(): String {
+            return ","
+        }
+    }
+
+    data class Number(
+        val value: Long
+    ) : SnailNumberToken {
+        override fun toString(): String {
+            return "$value"
         }
 
-        override fun sum(snailNumber: SnailNumber): SnailNumber {
-            return plus(snailNumber)
-                .reduce()
+        operator fun plus(value: Int): Number {
+            return Number(this.value + value)
         }
 
-        override fun explode(): SnailNumber.Pair {
-            explodeInternal()
-
-            TODO()
+        operator fun plus(value: Number): Number {
+            return Number(this.value + value.value)
         }
-
-        fun explodeInternal(depth: Int = 1): SnailNumber.Pair {
-
-            if (depth == 4) {
-                if (left is Regular) {
-
-                }
-            }
+    }
+}
 
 
+typealias SnailNumber = List<SnailNumberToken>
 
-            TODO()
-        }
+operator fun SnailNumber.plus(snailNumber: SnailNumber): SnailNumber {
+    return buildList {
+        add(SnailNumberToken.PairStart)
+        addAll(this@plus)
+        add(SnailNumberToken.Separator)
+        addAll(snailNumber)
+        add(SnailNumberToken.PairEnd)
+    }
+}
 
-        override fun split(): SnailNumber.Pair {
-            TODO()
-        }
-
-        override fun reduce(): SnailNumber.Pair {
+fun SnailNumber.sum(snailNumber: SnailNumber): SnailNumber {
+    return plus(snailNumber)
+        .run {
             var previous: SnailNumber
             var current = this
 
             do {
-                previous = current
-                current = current.explode()
+                do {
+                    previous = current
+                    current = current.explode()
+                } while (previous != current)
 
+                previous = current
+                current = current.split()
             } while (previous != current)
 
-            TODO()
+            current
         }
+}
 
-        override fun toString(): String {
-            return "[$left, $right]"
+fun <T> MutableList<T>.replaceFirst(
+    condition: (T) -> Boolean,
+    replace: (T) -> T
+): List<T> {
+    val index = indexOfFirst(condition)
+    return replaceAt(index, replace)
+}
+
+fun <T> MutableList<T>.replaceLast(
+    condition: (T) -> Boolean,
+    replace: (T) -> T
+): List<T> {
+    val index = indexOfLast(condition)
+    return replaceAt(index, replace)
+}
+
+fun <T> MutableList<T>.replaceAt(
+    index: Int,
+    replace: (T) -> T
+): List<T> {
+    if (index != -1) {
+        set(index, replace(get(index)))
+    }
+
+    return this
+}
+
+inline fun <T, reified S : T> MutableList<T>.replaceFirstOf(
+    crossinline replace: (S) -> S
+): List<T> {
+    return replaceFirst({ it is S }, { replace.invoke((it as S)) })
+}
+
+inline fun <T, reified S : T> MutableList<T>.replaceLastOf(
+    crossinline replace: (S) -> T
+): List<T> {
+    return replaceFirst({ it is S }, { replace(it as S) })
+}
+
+fun SnailNumber.explode(): SnailNumber {
+    var index = 0
+    var depth = 0
+    val originalList = this
+
+    return buildList<SnailNumberToken> {
+        val listBuilder = this
+
+        while (index < originalList.count()) {
+            when (val snailNumberToken = originalList[index]) {
+                is SnailNumberToken.Number -> {
+                    if (depth == 5) {
+                        if (listBuilder.last() == SnailNumberToken.PairStart) {
+                            listBuilder.replaceLastOf<SnailNumberToken, SnailNumberToken.Number> { it + snailNumberToken }
+                        } else {
+                            listBuilder.removeLast()
+                            listBuilder.removeLast()
+                            listBuilder.add(SnailNumberToken.Number(0))
+                            listBuilder.addAll(
+                                originalList.slice((index + 2) until originalList.count())
+                                    .toMutableList()
+                                    .replaceFirstOf<SnailNumberToken, SnailNumberToken.Number> { it + snailNumberToken }
+                            )
+                            return this@buildList
+                        }
+                    } else {
+                        listBuilder.add(snailNumberToken)
+                    }
+                }
+
+                SnailNumberToken.PairEnd -> {
+                    depth--
+                    listBuilder.add(snailNumberToken)
+                }
+
+                SnailNumberToken.PairStart -> {
+                    depth++
+                    listBuilder.add(snailNumberToken)
+                }
+
+                SnailNumberToken.Separator -> {
+                    listBuilder.add(snailNumberToken)
+                }
+            }
+            index++
         }
     }
 }
 
-class PairBuilder {
-    lateinit var left: SnailNumber
-    lateinit var right: SnailNumber
+fun SnailNumber.split(): SnailNumber {
+    val index = this.indexOfFirst { it is SnailNumberToken.Number && it.value >= 10 }
 
-    fun build(): SnailNumber.Pair {
-        return SnailNumber.Pair(left, right)
+    return if (index != -1) {
+        val originalList = this
+        buildList {
+            addAll(originalList.slice(0 until index))
+            val numberToken = originalList.get(index) as SnailNumberToken.Number
+            add(SnailNumberToken.PairStart)
+            val halvedValue = numberToken.value.toDouble() / 2
+            add(SnailNumberToken.Number(floor(halvedValue).toLong()))
+            add(SnailNumberToken.Separator)
+            add(SnailNumberToken.Number(ceil(halvedValue).toLong()))
+            add(SnailNumberToken.PairEnd)
+            addAll(originalList.slice((index + 1) until originalList.count()))
+        }
+    } else {
+        this
     }
 }
 
-private fun String.parseSnailNumber(): Pair<SnailNumber, String> {
-    return when (val startChar = first()) {
-        '[' -> {
-            val (left, rightRemainder) = drop(1).parseSnailNumber()
-            val (right, remainder) = rightRemainder.parseSnailNumber()
+fun String.toSnailNumber(): SnailNumber {
+    val numberBuilder = StringBuilder()
 
-            SnailNumber.Pair(
-                left,
-                right
-            ) to remainder.drop(1)
+    return flatMap {
+        when (it) {
+            '[' -> listOf(SnailNumberToken.PairStart)
+            ']' -> {
+                buildList {
+                    if (numberBuilder.isNotEmpty()) {
+                        add(SnailNumberToken.Number(numberBuilder.toString().toLong()))
+                        numberBuilder.clear()
+                    }
+                    add(SnailNumberToken.PairEnd)
+                }
+            }
+
+            ',' -> {
+                buildList {
+                    if (numberBuilder.isNotEmpty()) {
+                        add(
+                            SnailNumberToken.Number(numberBuilder.toString().toLong())
+                        )
+                        numberBuilder.clear()
+                    }
+                    add(SnailNumberToken.Separator)
+                }
+            }
+
+            ' ' -> listOf(SnailNumberToken.Separator)
+            else -> {
+                numberBuilder.append(it)
+                emptyList()
+            }
         }
-        in '0'..'9' -> {
-            val (number, rightRemainder) = split(",", "]", limit = 2)
-
-            println(number to rightRemainder)
-
-            SnailNumber.Regular(number.toLong()) to rightRemainder
-        }
-        else -> {
-            TODO("This branch should never be reached - first character of $this is unexpected")
-        }
-
     }
-}
-
-private fun String.toSnailNumber(initialDepth: Int = 0): SnailNumber {
-    return parseSnailNumber().let { (snailNumber, remainder) ->
-        println("Number: $snailNumber")
-        println("Remainder: $remainder")
-
-        snailNumber
-    }
-
-//    println(this)
-//    var depth = 0
-//    var stack = Stack<PairBuilder>()
-//    var idx = 0
-//
-//    while (true) {
-//        when (val startChar = get(idx)) {
-//            '[' -> stack.push(PairBuilder())
-//            ']' -> stack.peek().build() // TODO - is this pair left or right of the above one?
-//            in '0'..'9' -> {
-//                val (number, remainder) = split(",", limit = 2)
-//
-//                if (remainder.first() == '[') {
-//                    // pair right
-//                } else {
-//                    // regular number right
-//                }
-//
-//                stack.peek().left = SnailNumber.Regular(number.toLong())
-//            }
-//
-//        }
-//
-//        if (get(idx) == '[') {
-//            stack.push(PairBuilder())
-//        }
-//    }
-//
-//    val remainder = dropWhile {
-//        if (it == '[') {
-//            depth++
-//            true
-//        } else {
-//            false
-//        }
-//    }
-//
-//    var (left, right) = remainder.split(',', limit = 2)
-//
-//    println(left)
-//    println(right)
-//
-//    var leftRegular = left.toInt()
-//
-////    if (right.)
-//
-//    TODO()
-////    return SnailNumber.Pair(left, right)
 }
 
 private fun List<String>.toSnailNumbers(): List<SnailNumber> {
@@ -190,13 +226,13 @@ private fun List<String>.toSnailNumbers(): List<SnailNumber> {
 private fun List<String>.getSum(): String {
     return toSnailNumbers()
         .reduce(SnailNumber::sum)
-        .toString()
+        .joinToString("")
 }
 
-private fun List<String>.getMagnitudeOfSum(): String {
-    toSnailNumbers()
-    TODO()
-}
+//private fun List<String>.getMagnitudeOfSum(): String {
+//    toSnailNumbers()
+//    TODO()
+//}
 
 fun main() {
     18.solveExamples(
@@ -210,14 +246,13 @@ fun main() {
         solver = List<String>::getSum
     )
 
-
-    18.solveExample(
-        exampleNumber = 5,
-        expectedSolution = "4140",
-        solver = List<String>::getMagnitudeOfSum
-    )
-
-    18.solve(1, List<String>::getMagnitudeOfSum)
+//    18.solveExample(
+//        exampleNumber = 5,
+//        expectedSolution = "4140",
+//        solver = List<String>::getMagnitudeOfSum
+//    )
+//
+//    18.solve(1, List<String>::getMagnitudeOfSum)
 }
 
 private fun String.inPairs(): List<String> {
