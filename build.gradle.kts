@@ -1,7 +1,7 @@
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
-    kotlin("jvm") version "1.6.0"
+    kotlin("jvm") version "1.7.21"
 }
 
 group = "me.salzinger"
@@ -12,13 +12,13 @@ repositories {
 }
 
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
-    testImplementation("org.assertj:assertj-core:3.21.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
+    testImplementation("org.assertj:assertj-core:3.23.1")
 }
 
 kotlin {
     jvmToolchain {
-        (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
