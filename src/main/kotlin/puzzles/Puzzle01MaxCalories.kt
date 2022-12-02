@@ -4,11 +4,8 @@ import me.salzinger.common.FileType
 import me.salzinger.common.getFile
 import me.salzinger.common.solve
 import me.salzinger.common.writePuzzleSolution
-import puzzles.Puzzle1.getCaloriesList
-import puzzles.Puzzle1.maxCalories
-import puzzles.Puzzle1.sumCalories
 
-object Puzzle1 {
+object Puzzle01MaxCalories {
     fun getCaloriesList(level: Int, part: String): List<List<Int>> {
         return getFile(level, part, FileType.IN)
             .readLines()
