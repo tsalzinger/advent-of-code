@@ -18,13 +18,13 @@ fun getNextInput(puzzle: Int, part: Int? = null): List<String> =
     getFile(puzzle, part, FileType.IN)
         .readLines()
         .map(String::trim)
-        .filter(String::isNotBlank)
+        .dropLastWhile { it.isBlank() }
 
 fun getNextInput(puzzle: Int, part: String): List<String> =
     getFile(puzzle, part, FileType.IN)
         .readLines()
         .map(String::trim)
-        .filter(String::isNotBlank)
+        .dropLastWhile { it.isBlank() }
 
 fun Int.solveExample(expectedSolution: String, solver: List<String>.() -> String) {
     getNextInput(this, 0)
