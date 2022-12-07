@@ -1,6 +1,7 @@
 package puzzles
 
 import me.salzinger.common.solve
+import puzzles.Puzzle07NoSpaceLeftOnDevice.Part1.parseTerminalOutput
 import java.nio.file.Path
 import kotlin.io.path.Path
 
@@ -114,6 +115,35 @@ object Puzzle07NoSpaceLeftOnDevice {
         @JvmStatic
         fun main(args: Array<String>) {
             7.solve(1) {
+                solve().toString()
+            }
+        }
+    }
+
+
+    object Part2 {
+        private const val TOTAL_DISK_SPACE = 70000000
+        private const val REQUIRED_FREE_SPACE = 30000000
+        fun List<String>.solve(): Int {
+            return parseTerminalOutput()
+                .filterIsInstance<TerminalCommand.WithDirectoryContext.List>()
+                .getDirectorySizes()
+                .run {
+                    val freeDiskSpace = TOTAL_DISK_SPACE - single { it.path == Path("/") }.size
+
+                    val minimumDirectorySize = REQUIRED_FREE_SPACE - freeDiskSpace
+
+                    filter {
+                        it.size >= minimumDirectorySize
+                    }
+                }
+                .minBy { it.size }
+                .size
+        }
+
+        @JvmStatic
+        fun main(args: Array<String>) {
+            7.solve(2) {
                 solve().toString()
             }
         }
