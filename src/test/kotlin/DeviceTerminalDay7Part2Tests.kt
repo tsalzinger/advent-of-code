@@ -8,6 +8,7 @@ class DeviceTerminalDay7Part2Tests {
     fun testDirectorySizeSum() {
         getFile(level = 7, part = "example-1", FileType.IN)
             .readLines()
+            .asSequence()
             .solve()
             .toString()
             .assertThat {

@@ -1,6 +1,10 @@
 package me.salzinger.common
 
 import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.bufferedReader
+import kotlin.io.path.writeText
+import kotlin.streams.asSequence
 
 enum class FileType(val extension: String) {
     IN("in"),
@@ -79,3 +83,13 @@ fun String.writePuzzleSolution(level: Int, part: Int? = null) {
     listOf(this).writePuzzleSolution(level, part)
 }
 
+fun String.streamInput(): Sequence<String> {
+    return Path.of("src/main/resources", this)
+        .bufferedReader()
+        .lines()
+        .asSequence()
+}
+
+fun <T> T.writeToFile(fileName: String, transformer: (T) -> String = { it.toString() }) {
+    Path.of("src/main/resources", fileName).writeText(transformer(this))
+}

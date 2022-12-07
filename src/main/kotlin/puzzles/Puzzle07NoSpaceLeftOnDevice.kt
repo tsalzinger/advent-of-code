@@ -1,6 +1,8 @@
 package puzzles
 
 import me.salzinger.common.solve
+import me.salzinger.common.streamInput
+import me.salzinger.common.writeToFile
 import puzzles.Puzzle07NoSpaceLeftOnDevice.Part1.parseTerminalOutput
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -88,7 +90,7 @@ object Puzzle07NoSpaceLeftOnDevice {
     private const val MAX_DIRECTORY_SIZE = 100_000
 
     object Part1 {
-        fun List<String>.parseTerminalOutput(): List<TerminalCommand> {
+        fun Sequence<String>.parseTerminalOutput(): Iterable<TerminalCommand> {
             val inputList = this@parseTerminalOutput.toMutableList()
             var currentPath: Path? = null
 
@@ -104,7 +106,7 @@ object Puzzle07NoSpaceLeftOnDevice {
             }
         }
 
-        fun List<String>.solve(): Int {
+        fun Sequence<String>.solve(): Int {
             return parseTerminalOutput()
                 .filterIsInstance<TerminalCommand.WithDirectoryContext.List>()
                 .getDirectorySizes()
@@ -115,7 +117,7 @@ object Puzzle07NoSpaceLeftOnDevice {
         @JvmStatic
         fun main(args: Array<String>) {
             7.solve(1) {
-                solve().toString()
+                asSequence().solve().toString()
             }
         }
     }
@@ -124,7 +126,7 @@ object Puzzle07NoSpaceLeftOnDevice {
     object Part2 {
         private const val TOTAL_DISK_SPACE = 70000000
         private const val REQUIRED_FREE_SPACE = 30000000
-        fun List<String>.solve(): Int {
+        fun Sequence<String>.solve(): Int {
             return parseTerminalOutput()
                 .filterIsInstance<TerminalCommand.WithDirectoryContext.List>()
                 .getDirectorySizes()
@@ -143,9 +145,10 @@ object Puzzle07NoSpaceLeftOnDevice {
 
         @JvmStatic
         fun main(args: Array<String>) {
-            7.solve(2) {
-                solve().toString()
-            }
+            "puzzle-7-2.in"
+                .streamInput()
+                .solve()
+                .writeToFile("puzzle-7-2.out")
         }
     }
 
