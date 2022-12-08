@@ -19,7 +19,7 @@ class Grid2D<T>(
 
     data class Cell<T>(val coordinate: Coordinate, val value: T)
 
-    fun transformValues(transformer: (Cell<T>) -> T): Grid2D<T> {
+    fun <R> transformValues(transformer: (Cell<T>) -> R): Grid2D<R> {
         return Grid2D(
             values = map(transformer).chunked(columns),
             neighborProvider = neighborProvider,
@@ -63,6 +63,10 @@ class Grid2D<T>(
 
     fun getCellAt(coordinate: Coordinate): Cell<T> {
         return cells.getValue(coordinate)
+    }
+
+    fun getCellAtOrNull(coordinate: Coordinate): Cell<T>? {
+        return cells[coordinate]
     }
 
     fun getNeighborsOf(coordinate: Coordinate): Set<Cell<T>> {
