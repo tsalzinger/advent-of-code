@@ -139,4 +139,59 @@ object Puzzle08TreetopTreeHouse {
         }
     }
 
+    object Part2 {
+
+        fun Grid2D<Int>.countVisibleTrees(
+            cell: Grid2D.Cell<Int>,
+            viewDirection: ViewDirection,
+        ): Int {
+            var scenicScore = 0
+            var nextCell = getCellAtOrNull(cell.coordinate.getNeighborInViewDirection(viewDirection))
+            while (nextCell != null) {
+                scenicScore++
+
+                nextCell = if (nextCell.value >= cell.value) {
+                    null
+                } else {
+                    getCellAtOrNull(nextCell.coordinate.getNeighborInViewDirection(viewDirection))
+                }
+            }
+
+            return scenicScore
+        }
+
+        fun Sequence<String>.solve(): Int {
+            return mapNotNull { inputRow ->
+                if (inputRow.isNotBlank()) {
+                    inputRow.toIntList()
+                } else {
+                    null
+                }
+            }.toList()
+                .toGrid2D()
+                .run {
+                    transformValues { cell ->
+                        ViewDirection
+                            .values()
+                            .map {
+                                countVisibleTrees(cell, it)
+                            }
+                            .reduce { scenicScore, visibleTrees -> scenicScore * visibleTrees }
+
+                    }
+                        .also { grid ->
+                            println(grid.toConsoleString { it.value.toString() })
+                        }
+                }
+                .maxOf { it.value }
+        }
+
+        @JvmStatic
+        fun main(args: Array<String>) {
+            "puzzle-8.in"
+                .streamInput()
+                .solve()
+                .run(::println)
+        }
+    }
 }
