@@ -2,7 +2,6 @@ package puzzles
 
 import me.salzinger.common.Grid2D
 import me.salzinger.common.streamInput
-import me.salzinger.common.toConsoleString
 
 object Puzzle09RopeBridge {
     private fun Grid2D.Coordinate.isNeighborOf(coordinate: Grid2D.Coordinate): Boolean {
@@ -39,55 +38,71 @@ object Puzzle09RopeBridge {
 
         data class CellPrinter(val transformer: Grid2D.Coordinate.() -> String)
 
-        fun Sequence<String>.solve(): Int {
-            val startingCoordinate = Grid2D.Coordinate(50, 50)
-
+        fun Sequence<Grid2D.Coordinate.() -> Grid2D.Coordinate>.simulateTailMovement(): Sequence<Grid2D.Coordinate.() -> Grid2D.Coordinate> {
+            val startingCoordinate = Grid2D.Coordinate(0, 0)
             var headPosition = startingCoordinate
             var tailPosition = startingCoordinate
-            val tailPositions = mutableSetOf(tailPosition)
-            var lastCoordinateTransformer: Grid2D.Coordinate.() -> Grid2D.Coordinate = { this }
 
-            val grid = Grid2D(
-                List(101) {
-                    List(101) {
-                        CellPrinter {
-                            when {
-                                this == headPosition -> "H"
-                                this == tailPosition -> "T"
-                                this == startingCoordinate -> "s"
-                                this in tailPositions -> "#"
-                                else -> "."
-                            }
+            return map { coordinateTransformer ->
+                val currentHeadPosition = headPosition
+                val currentTailPosition = tailPosition
+                val newHeadPosition = coordinateTransformer(headPosition)
+                val tailPositionTransformer: (Grid2D.Coordinate.() -> Grid2D.Coordinate) =
+                    when {
+                        newHeadPosition == currentTailPosition -> {
+                            { currentTailPosition }
+                        }
+
+                        newHeadPosition.isNeighborOf(currentTailPosition) -> {
+                            { currentTailPosition }
+                        }
+
+
+                        else -> {
+                            { currentHeadPosition }
                         }
                     }
-                }
+
+                headPosition = newHeadPosition
+                tailPosition = tailPositionTransformer(tailPosition)
+                tailPositionTransformer
+            }
+        }
+
+        fun Sequence<String>.toCoordinateTransformations(): Sequence<Grid2D.Coordinate.() -> Grid2D.Coordinate> {
+            return flatMap { it.toCoordinateTransformations() }
+        }
+
+
+        fun Sequence<String>.solve(): Int {
+            val startingCoordinate = Grid2D.Coordinate(
+                0,
+                0
             )
-
-            println("===================")
-            println(grid.toConsoleString { it.value.transformer(it.coordinate) })
-
-            flatMap { it.toCoordinateTransformations() }
-//                .take(10)
-                .forEach { coordinateTransformer ->
-                    val newHeadPosition = coordinateTransformer(headPosition)
-
-                    if (newHeadPosition != tailPosition && !newHeadPosition.isNeighborOf(tailPosition)) {
-                        tailPosition = if (tailPosition.isDiagonalNeighborOf(headPosition)) {
-                            headPosition
-                        } else {
-                            coordinateTransformer(tailPosition)
-                        }
+            return toCoordinateTransformations()
+                .simulateTailMovement()
+                .fold(
+                    startingCoordinate to setOf<Grid2D.Coordinate>(startingCoordinate)
+                ) { (currentCoordinate, visitedCoordinates), coordinateTransformation ->
+                    coordinateTransformation(currentCoordinate).run {
+                        this to (visitedCoordinates + this)
                     }
+                }.second.count()
+        }
 
-                    tailPositions.add(tailPosition)
-                    headPosition = newHeadPosition
-                    lastCoordinateTransformer = coordinateTransformer
+        @JvmStatic
+        fun main(args: Array<String>) {
+            "puzzle-9.in"
+                .streamInput()
+                .solve()
+                .run(::println)
+        }
+    }
 
-                    println("===================")
-                    println(grid.toConsoleString { it.value.transformer(it.coordinate) })
-                }
+    object Part2 {
 
-            return tailPositions.count()
+        fun Sequence<String>.solve(): Int {
+            TODO()
         }
 
         @JvmStatic
