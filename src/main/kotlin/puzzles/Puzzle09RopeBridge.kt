@@ -2,6 +2,12 @@ package puzzles
 
 import me.salzinger.common.Grid2D
 import me.salzinger.common.streamInput
+import me.salzinger.common.toConsoleString
+import puzzles.Puzzle09RopeBridge.Part1.printAsGrid
+import puzzles.Puzzle09RopeBridge.Part1.simulateTailMovement
+import puzzles.Puzzle09RopeBridge.Part1.toCoordinateTransformations
+import puzzles.Puzzle09RopeBridge.Part1.visitedCoordinates
+import kotlin.math.sign
 
 object Puzzle09RopeBridge {
     private fun Grid2D.Coordinate.isNeighborOf(coordinate: Grid2D.Coordinate): Boolean {
@@ -36,7 +42,9 @@ object Puzzle09RopeBridge {
             return sequenceOf(*Array(movementCount.toInt()) { coordinateTransformation })
         }
 
-        data class CellPrinter(val transformer: Grid2D.Coordinate.() -> String)
+        data class CellPrinter(val transformer: Grid2D.Coordinate.() -> String) {
+            operator fun invoke(coordinate: Grid2D.Coordinate) = transformer(coordinate)
+        }
 
         fun Sequence<Grid2D.Coordinate.() -> Grid2D.Coordinate>.simulateTailMovement(): Sequence<Grid2D.Coordinate.() -> Grid2D.Coordinate> {
             val startingCoordinate = Grid2D.Coordinate(0, 0)
@@ -44,26 +52,28 @@ object Puzzle09RopeBridge {
             var tailPosition = startingCoordinate
 
             return map { coordinateTransformer ->
-                val currentHeadPosition = headPosition
                 val currentTailPosition = tailPosition
-                val newHeadPosition = coordinateTransformer(headPosition)
+                headPosition = coordinateTransformer(headPosition)
                 val tailPositionTransformer: (Grid2D.Coordinate.() -> Grid2D.Coordinate) =
                     when {
-                        newHeadPosition == currentTailPosition -> {
+                        headPosition == currentTailPosition -> {
                             { currentTailPosition }
                         }
 
-                        newHeadPosition.isNeighborOf(currentTailPosition) -> {
+                        headPosition.isNeighborOf(currentTailPosition) -> {
                             { currentTailPosition }
                         }
-
 
                         else -> {
-                            { currentHeadPosition }
+                            {
+                                Grid2D.Coordinate(
+                                    row = row + (headPosition.row - currentTailPosition.row).sign,
+                                    column = column + (headPosition.column - currentTailPosition.column).sign,
+                                )
+                            }
                         }
                     }
 
-                headPosition = newHeadPosition
                 tailPosition = tailPositionTransformer(tailPosition)
                 tailPositionTransformer
             }
@@ -74,20 +84,55 @@ object Puzzle09RopeBridge {
         }
 
 
-        fun Sequence<String>.solve(): Int {
+        fun Sequence<Grid2D.Coordinate.() -> Grid2D.Coordinate>.visitedCoordinates(): Set<Grid2D.Coordinate> {
             val startingCoordinate = Grid2D.Coordinate(
                 0,
                 0
             )
+
+            return fold(
+                startingCoordinate to setOf<Grid2D.Coordinate>(startingCoordinate)
+            ) { (currentCoordinate, visitedCoordinates), coordinateTransformation ->
+                coordinateTransformation(currentCoordinate).run {
+                    this to (visitedCoordinates + this)
+                }
+            }.second
+        }
+
+        fun Set<Grid2D.Coordinate>.printAsGrid(): Set<Grid2D.Coordinate> {
+            val minRow = minOf { it.row }
+            val maxRow = maxOf { it.row }
+            val minColumn = minOf { it.column }
+            val maxColumn = maxOf { it.column }
+
+            val rows = maxRow - minRow
+            val columns = maxColumn - minColumn
+
+            Grid2D(
+                List(rows + 1) {
+                    List(columns + 1) {
+                        CellPrinter {
+                            when (copy(row = row + minRow, column = column + minColumn)) {
+                                in this@printAsGrid -> "#"
+                                else -> "."
+                            }
+                        }
+                    }
+                }
+            ).toConsoleString { it.value(it.coordinate) }
+                .run(::println)
+
+            return this
+        }
+
+        fun Sequence<Grid2D.Coordinate.() -> Grid2D.Coordinate>.countVisitedCoordinates(): Int {
+            return visitedCoordinates().count()
+        }
+
+        fun Sequence<String>.solve(): Int {
             return toCoordinateTransformations()
                 .simulateTailMovement()
-                .fold(
-                    startingCoordinate to setOf<Grid2D.Coordinate>(startingCoordinate)
-                ) { (currentCoordinate, visitedCoordinates), coordinateTransformation ->
-                    coordinateTransformation(currentCoordinate).run {
-                        this to (visitedCoordinates + this)
-                    }
-                }.second.count()
+                .countVisitedCoordinates()
         }
 
         @JvmStatic
@@ -102,7 +147,19 @@ object Puzzle09RopeBridge {
     object Part2 {
 
         fun Sequence<String>.solve(): Int {
-            TODO()
+            return toCoordinateTransformations()
+                .simulateTailMovement()
+                .simulateTailMovement()
+                .simulateTailMovement()
+                .simulateTailMovement()
+                .simulateTailMovement()
+                .simulateTailMovement()
+                .simulateTailMovement()
+                .simulateTailMovement()
+                .simulateTailMovement()
+                .visitedCoordinates()
+                .printAsGrid()
+                .count()
         }
 
         @JvmStatic
