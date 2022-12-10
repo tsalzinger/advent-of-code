@@ -1,6 +1,7 @@
 package puzzles
 
 import me.salzinger.common.streamInput
+import puzzles.Puzzle10CathodeRayTube.Part1.instructionToOperators
 
 object Puzzle10CathodeRayTube {
 
@@ -14,7 +15,7 @@ object Puzzle10CathodeRayTube {
 
         fun String.instructionToOperators(): Sequence<SingleRegisterState.() -> SingleRegisterState> {
             val instructionParts = split(" ")
-            return when (val instructionOperation = instructionParts.first()) {
+            return when (instructionParts.first()) {
                 "noop" -> sequenceOf({ this })
                 "addx" -> {
                     val valueToAdd = instructionParts[1].toInt()
@@ -32,7 +33,6 @@ object Puzzle10CathodeRayTube {
             return flatMap { it.instructionToOperators() }
                 .foldIndexed(SingleRegisterState(1) to 0) { index, (registerState, signalStrengthSum), operator ->
                     if ((index + 1 - 20) % 40 == 0) {
-                        println("\t${index + 1}: ${registerState.value}")
                         val signalStrength = (index + 1) * registerState.value
                         operator(registerState) to (signalStrengthSum + signalStrength)
                     } else {
@@ -52,9 +52,25 @@ object Puzzle10CathodeRayTube {
     }
 
     object Part2 {
+        private const val CRT_SCREEN_WIDTH = 40
 
-        fun Sequence<String>.solve(): Int {
-            TODO()
+        fun Sequence<String>.solve(): String {
+            return flatMap { it.instructionToOperators() }
+                .foldIndexed(SingleRegisterState(1) to listOf<Char>()) { index, (registerState, screenOutput), operator ->
+                    val currentPixel =
+                        if (index % CRT_SCREEN_WIDTH in (registerState.value - 1)..(registerState.value + 1)) {
+                            '#'
+                        } else {
+                            '.'
+                        }
+
+                    println("\t${index + 1}: $currentPixel (${registerState.value})")
+
+                    operator(registerState) to (screenOutput + currentPixel)
+
+                }.second
+                .chunked(CRT_SCREEN_WIDTH)
+                .joinToString("\n") { it.joinToString("") }
         }
 
         @JvmStatic
