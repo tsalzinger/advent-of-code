@@ -2,7 +2,7 @@ import me.salzinger.common.streamInput
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
-import puzzles.Puzzle10CathodeRayTube.Part2.solve
+import puzzles.Puzzle11MonkeyInTheMiddle.Part1.solve
 
 class Puzzle11Part1MonkeyInTheMiddleTest {
     @TestFactory
