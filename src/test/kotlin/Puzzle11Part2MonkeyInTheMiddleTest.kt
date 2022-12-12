@@ -1,15 +1,15 @@
 import me.salzinger.common.streamInput
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
-import puzzles.Puzzle11MonkeyInTheMiddle.Part1.solve
+import puzzles.Puzzle11MonkeyInTheMiddle.Part2.solve
+import java.math.BigInteger
 
-class Puzzle11Part1MonkeyInTheMiddleTest {
+class Puzzle11Part2MonkeyInTheMiddleTest {
     @TestFactory
     fun examples(): Iterable<DynamicNode> {
         return listOf(
-            "1" to 10605
+            "1" to BigInteger("2713310158")
         )
             .map { (example, expectedSolution) ->
                 DynamicTest.dynamicTest("example-$example") {
@@ -20,16 +20,6 @@ class Puzzle11Part1MonkeyInTheMiddleTest {
                             isEqualTo(expectedSolution)
                         }
                 }
-            }
-    }
-
-    @Test
-    fun test() {
-        "puzzle-11.in"
-            .streamInput()
-            .solve()
-            .assertThat {
-                isEqualTo(98280)
             }
     }
 }
