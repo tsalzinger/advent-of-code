@@ -2,6 +2,7 @@ package puzzles
 
 import me.salzinger.common.Grid2D
 import me.salzinger.common.streamInput
+import me.salzinger.common.toConsoleString
 import puzzles.Puzzle12HillClimbingAlgorithm.Part1.canBeAccessedFrom
 
 object Puzzle12HillClimbingAlgorithm {
@@ -39,8 +40,13 @@ object Puzzle12HillClimbingAlgorithm {
         }
     }
 
-    fun Grid2D<HeightItem>.getNeighborsThanCanAccess(targetCell: Grid2D.Cell<HeightItem>): List<Grid2D.Cell<HeightItem>> {
-        return getNeighborsOf(targetCell).filter { targetCell.value.canBeAccessedFrom(it.value) }
+    data class StepCount(
+        val heightItem: HeightItem,
+        var stepCount: Int? = null,
+    )
+
+    fun Grid2D<StepCount>.getNeighborsThanCanAccess(targetCell: Grid2D.Cell<StepCount>): List<Grid2D.Cell<StepCount>> {
+        return getNeighborsOf(targetCell).filter { targetCell.value.heightItem.canBeAccessedFrom(it.value.heightItem) }
     }
 
     object Part1 {
@@ -49,41 +55,41 @@ object Puzzle12HillClimbingAlgorithm {
             return (heightItem.height + 1) >= height
         }
 
-        fun Grid2D<HeightItem>.getPathsFrom(
-            startingCell: Grid2D.Cell<HeightItem>,
-            targetCell: Grid2D.Cell<HeightItem>,
-            alreadyVisitedCells: Set<Grid2D.Cell<HeightItem>> = setOf(startingCell),
-        ): List<List<Grid2D.Cell<HeightItem>>> {
-            return getNeighborsThanCanAccess(startingCell)
-                .filter { it !in alreadyVisitedCells }
-                .flatMap { nextCell ->
-                    if (nextCell == targetCell) {
-                        listOf(listOf(nextCell))
-                    } else {
-                        getPathsFrom(
-                            startingCell = nextCell,
-                            targetCell = targetCell,
-                            alreadyVisitedCells = alreadyVisitedCells + nextCell
-                        ).map {
-                            buildList {
-                                add(nextCell)
-                                addAll(it)
-                            }
-                        }
-                    }
-                }
-        }
-
         fun Sequence<String>.solve(): Int {
             return toGrid()
+                .transformValues {
+                    StepCount(
+                        heightItem = it.value,
+                    )
+                }
                 .let { grid ->
-                    val startingCell = grid.single { it.value.heightCode == 'S' }
-                    val targetCell = grid.single { it.value.heightCode == 'E' }
+                    // note - we invert start and end intentionally as we expect a narrow path (== less choices) near the target
+                    val targetCell = grid.single { it.value.heightItem.heightCode == 'S' }
+                    val startingCell = grid.single { it.value.heightItem.heightCode == 'E' }
 
-                    grid.getPathsFrom(
-                        startingCell = targetCell,
-                        targetCell = startingCell,
-                    ).minOf { it.count() }
+                    var currentCells = setOf(startingCell)
+                    var currentSteps = 0
+                    startingCell.value.stepCount = currentSteps
+
+                    while (targetCell !in currentCells && currentCells.isNotEmpty()) {
+                        currentSteps++
+                        currentCells = currentCells
+                            .flatMap { currentCell ->
+                                grid.getNeighborsThanCanAccess(currentCell)
+                            }
+                            .filter { it.value.stepCount == null }
+                            .toSet()
+                            .onEach { it.value.stepCount = currentSteps }
+                    }
+
+
+                    println(grid.toConsoleString { cell ->
+                        cell.value.stepCount?.toString()
+                            ?.padStart(4, ' ')
+                            ?.let { "($it)" } ?: "(....)"
+                    })
+
+                    targetCell.value.stepCount!!
                 }
         }
 

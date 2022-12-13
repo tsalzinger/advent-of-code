@@ -8,7 +8,8 @@ class Puzzle12Part1HillClimbingAlgorithmTest {
     @TestFactory
     fun exampleTests(): Iterable<DynamicNode> {
         return listOf(
-            "puzzle-12-example-1.in" to 31
+            "puzzle-12-example-1.in" to 31,
+            "puzzle-12.in" to 380,
         ).map { (exampleInputFileName, expectedSolution) ->
             DynamicTest.dynamicTest(exampleInputFileName) {
                 exampleInputFileName
