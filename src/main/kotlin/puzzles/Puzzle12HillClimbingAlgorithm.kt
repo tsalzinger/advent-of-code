@@ -101,4 +101,53 @@ object Puzzle12HillClimbingAlgorithm {
                 .let(::println)
         }
     }
+
+    object Part2 {
+
+        fun Sequence<String>.solve(): Int {
+            return toGrid()
+                .transformValues {
+                    StepCount(
+                        heightItem = it.value,
+                    )
+                }
+                .let { grid ->
+                    // note - we invert start and end intentionally as we expect a narrow path (== less choices) near the target
+                    val targetCell = grid.single { it.value.heightItem.heightCode == 'S' }
+                    val startingCell = grid.single { it.value.heightItem.heightCode == 'E' }
+
+                    var currentCells = setOf(startingCell)
+                    var currentSteps = 0
+                    startingCell.value.stepCount = currentSteps
+
+                    while (currentCells.find { it.value.heightItem.height == 0 } == null) {
+                        currentSteps++
+                        currentCells = currentCells
+                            .flatMap { currentCell ->
+                                grid.getNeighborsThanCanAccess(currentCell)
+                            }
+                            .filter { it.value.stepCount == null }
+                            .toSet()
+                            .onEach { it.value.stepCount = currentSteps }
+                    }
+
+
+                    println(grid.toConsoleString { cell ->
+                        cell.value.stepCount?.toString()
+                            ?.padStart(4, ' ')
+                            ?.let { "($it)" } ?: "(....)"
+                    })
+
+                    currentCells.first { it.value.heightItem.height == 0 }.value.stepCount!!
+                }
+        }
+
+        @JvmStatic
+        fun main(args: Array<String>) {
+            "puzzle-12.in"
+                .streamInput()
+                .solve()
+                .let(::println)
+        }
+    }
 }
