@@ -79,6 +79,50 @@ object Puzzle14RegolithReservoir {
             )
         }
 
+        fun LazyGrid2D<OccupationType>.getSandTargetCoordinateOrNull(spawnCoordinate: Grid2D.Coordinate): Grid2D.Coordinate? {
+            var currentCell = getCellAtOrNull(spawnCoordinate.down())
+
+            while (currentCell != null) {
+                // move down
+                while (currentCell?.value == OccupationType.Air) {
+                    currentCell = getCellAtOrNull(currentCell.coordinate.down())
+                }
+
+                if (currentCell != null) {
+                    // can move diagonal?
+                    val diagonalLeftCell = getCellAtOrNull(currentCell.coordinate.left())
+                    currentCell = when {
+                        diagonalLeftCell == null -> {
+                            null
+                        }
+
+                        diagonalLeftCell.value == OccupationType.Air -> {
+                            diagonalLeftCell
+                        }
+
+                        else -> {
+                            val diagonalRightCell = getCellAtOrNull(currentCell.coordinate.right())
+                            when {
+                                diagonalRightCell == null -> {
+                                    null
+                                }
+
+                                diagonalRightCell.value == OccupationType.Air -> {
+                                    diagonalRightCell
+                                }
+
+                                else -> {
+                                    return currentCell.coordinate.up()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return currentCell
+        }
+
         fun Sequence<String>.solve(): Int {
             val sandLocations = mutableSetOf<Grid2D.Coordinate>()
             val startingLocation = Grid2D.Coordinate(row = 0, column = 500)
@@ -96,7 +140,13 @@ object Puzzle14RegolithReservoir {
                     }
                 },
                 sandLocations = { sandLocations },
-            )
+            ).also { grid ->
+                var nextSandLocation = grid.getSandTargetCoordinateOrNull(startingLocation)
+                while (nextSandLocation != null) {
+                    sandLocations += nextSandLocation
+                    nextSandLocation = grid.getSandTargetCoordinateOrNull(startingLocation)
+                }
+            }
                 .also { grid ->
                     println(grid.toConsoleString { cell ->
                         when (cell.value) {
@@ -115,7 +165,7 @@ object Puzzle14RegolithReservoir {
                 }
 
 
-            TODO()
+            return sandLocations.count()
         }
 
         @JvmStatic
