@@ -9,6 +9,7 @@ data class Point2D(
     fun manhattenDistance(anotherPoint: Point2D) = abs(x - anotherPoint.x) + abs(y - anotherPoint.y)
 
     operator fun plus(vector: Vector2D) = Point2D(x + vector.dx, y + vector.dy)
+    operator fun minus(vector: Vector2D) = Point2D(x - vector.dx, y - vector.dy)
 
     fun vectorTo(other: Point2D) = Vector2D(other.x - x, other.y - y)
 

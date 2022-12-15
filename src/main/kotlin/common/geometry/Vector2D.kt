@@ -34,4 +34,6 @@ data class Vector2D(
     operator fun div(factor: Int) = Vector2D(dx / factor, dy / factor)
 
     fun minimize() = this / ggt(dx, dy)
+
+    fun invert(): Vector2D = this * -1
 }
