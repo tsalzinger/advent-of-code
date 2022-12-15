@@ -5,6 +5,8 @@ import me.salzinger.common.extensions.toIntList
 import me.salzinger.common.geometry.LazyGrid2D
 import me.salzinger.common.geometry.toConsoleString
 import me.salzinger.common.streamInput
+import puzzles.Puzzle14RegolithReservoir.Part1.getSandTargetCoordinateOrNull
+import puzzles.Puzzle14RegolithReservoir.Part1.toLineCoordinates
 
 object Puzzle14RegolithReservoir {
     object Part1 {
@@ -160,6 +162,77 @@ object Puzzle14RegolithReservoir {
 
                             OccupationType.Rock -> "#"
                             OccupationType.Sand -> "o"
+                        }
+                    })
+                }
+
+
+            return sandLocations.count()
+        }
+
+        @JvmStatic
+        fun main(args: Array<String>) {
+            "puzzle-14.in"
+                .streamInput()
+                .solve()
+                .let(::println)
+        }
+    }
+
+    object Part2 {
+
+        fun Sequence<String>.solve(): Int {
+            val sandLocations = mutableSetOf<Grid2D.Coordinate>()
+            val startingLocation = Grid2D.Coordinate(row = 0, column = 500)
+
+            map {
+                it.toLineCoordinates()
+            }.let { rockPaths ->
+                val rockLocations = rockPaths.flatten().toSet()
+                val minRow = minOf(rockLocations.minOf { it.row }, startingLocation.row)
+                val maxRow = rockLocations.maxOf { it.row } + 2
+                val boundary = LazyGrid2D.Boundary(
+                    minRow = minRow,
+                    maxRow = maxRow,
+                    minColumn = startingLocation.column - (maxRow - minRow),
+                    maxColumn = startingLocation.column + (maxRow - minRow),
+                )
+
+                LazyGrid2D(
+                    valuesProvider = { coordinate ->
+                        if (coordinate.row == maxRow) {
+                            Part1.OccupationType.Rock
+                        } else {
+                            when (coordinate) {
+                                in sandLocations -> Part1.OccupationType.Sand
+                                in rockLocations -> Part1.OccupationType.Rock
+                                else -> Part1.OccupationType.Air
+                            }
+                        }
+
+                    },
+                    boundaryProvider = { boundary },
+                )
+            }.also { grid ->
+                var nextSandLocation = grid.getSandTargetCoordinateOrNull(startingLocation)
+                while (nextSandLocation != null && startingLocation !in sandLocations) {
+                    sandLocations += nextSandLocation
+                    nextSandLocation = grid.getSandTargetCoordinateOrNull(startingLocation)
+                }
+            }
+                .also { grid ->
+                    println(grid.toConsoleString { cell ->
+                        when (cell.value) {
+                            Part1.OccupationType.Air -> {
+                                if (cell.coordinate == startingLocation) {
+                                    "+"
+                                } else {
+                                    "."
+                                }
+                            }
+
+                            Part1.OccupationType.Rock -> "#"
+                            Part1.OccupationType.Sand -> "o"
                         }
                     })
                 }
