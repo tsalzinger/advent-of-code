@@ -4,6 +4,9 @@ import me.salzinger.common.extensions.toPairs
 import me.salzinger.common.geometry.Point2D
 import me.salzinger.common.geometry.Vector2D
 import me.salzinger.common.streamInput
+import me.salzinger.puzzles.Puzzle15BeaconExclusionZone.Part1.toSensorAndBeaconPosition
+import java.math.BigInteger
+import java.time.LocalTime
 
 object Puzzle15BeaconExclusionZone {
     object Part1 {
@@ -49,6 +52,8 @@ object Puzzle15BeaconExclusionZone {
                 .map { (sensorPosition, beaconPosition) ->
                     val manhattenDistance = sensorPosition.manhattenDistance(beaconPosition)
 
+                    println("$sensorPosition, $beaconPosition -> $manhattenDistance")
+
                     val upVector = Vector2D(dx = 0, dy = manhattenDistance)
                     val rightVector = Vector2D(dx = manhattenDistance, dy = 0)
 
@@ -79,6 +84,51 @@ object Puzzle15BeaconExclusionZone {
         @JvmStatic
         fun main(args: Array<String>) {
             "puzzle-15.in".streamInput().solve(yToScan = 2_000_000).let(::println)
+        }
+    }
+
+    object Part2 {
+
+        fun Sequence<String>.solve(searchRange: IntRange): BigInteger {
+            val coveredBySensors = map { it.toSensorAndBeaconPosition() }
+                .map { (sensorPosition, beaconPosition) ->
+                    val manhattenDistance = sensorPosition.manhattenDistance(beaconPosition)
+
+                    return@map { position: Point2D ->
+                        sensorPosition.manhattenDistance(position) <= manhattenDistance
+                    }
+                }.toList()
+
+            val location = searchRange
+                .asSequence()
+                .flatMap { x ->
+                    searchRange
+                        .asSequence()
+                        .map { y ->
+                            Point2D(x, y).also {
+                                if (x % 100 == 0 && y == 0) {
+                                    println("\t$it\t${LocalTime.now().toSecondOfDay()}")
+                                }
+                            }
+                        }
+                }
+                .first { testLocation ->
+                    coveredBySensors.none { it -> it(testLocation) }
+                }
+
+            println(location)
+
+            return location.x.toBigInteger() * 4_000_000.toBigInteger() + location.y.toBigInteger()
+        }
+
+        @JvmStatic
+        fun main(args: Array<String>) {
+            "puzzle-15.in"
+                .streamInput()
+                .solve(
+                    searchRange = 0..4_000_000
+                )
+                .let(::println)
         }
     }
 }
