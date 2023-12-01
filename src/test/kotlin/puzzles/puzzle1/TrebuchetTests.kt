@@ -2,12 +2,13 @@ package puzzles.puzzle1
 
 import assertThat
 import me.salzinger.common.streamInput
-import me.salzinger.puzzles.puzzle1.Trebuchet.getCalibrationValue
+import me.salzinger.puzzles.puzzle1.Trebuchet.Part1.getCalibrationValue
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import me.salzinger.puzzles.puzzle1.Trebuchet.Part1.solve as solvePart1
+import me.salzinger.puzzles.puzzle1.Trebuchet.Part2.solve as solvePart2
 
 class TrebuchetTests {
     @TestFactory
@@ -35,6 +36,16 @@ class TrebuchetTests {
             .solvePart1()
             .assertThat {
                 isEqualTo(142)
+            }
+    }
+
+    @Test
+    fun `example 2`() {
+        "puzzles/puzzle1/puzzle-1-example-2.in"
+            .streamInput()
+            .solvePart2()
+            .assertThat {
+                isEqualTo(281)
             }
     }
 }
