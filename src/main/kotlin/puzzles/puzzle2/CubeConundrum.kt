@@ -32,6 +32,10 @@ object CubeConundrum {
             }
         }
 
+        val power: Int by lazy {
+            maxColorOccurrences.values.reduce { acc, i -> acc * i }
+        }
+
         fun isPossibleWith(availableCubes: Map<Color, Int>): Boolean {
             availableCubes
                 .onEach { (color, availableCount) ->
@@ -81,5 +85,10 @@ object CubeConundrum {
         return parseAsGames()
             .filterPossibleGames(availableCubes)
             .sumOf { (gameId, _) -> gameId }
+    }
+
+    fun Sequence<String>.getSumOfGamePowers(): Int {
+        return parseAsGames()
+            .sumOf { (_, game) -> game.power }
     }
 }
