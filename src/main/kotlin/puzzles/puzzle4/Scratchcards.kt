@@ -8,11 +8,13 @@ object Scratchcards {
         val winningNumbers: Set<Int>,
         val playerNumbers: Set<Int>,
     ) {
-        val points: Long by lazy {
-            val countOfMatchingNumbers = playerNumbers.count {
+        val countOfMatchingNumbers: Int by lazy {
+            playerNumbers.count {
                 it in winningNumbers
             }
+        }
 
+        val points: Long by lazy {
             if (countOfMatchingNumbers == 0) {
                 0
             } else {
@@ -43,5 +45,23 @@ object Scratchcards {
         return sumOf {
             it.points
         }
+    }
+
+    fun Sequence<Scratchcard>.sumOfScratchcards(): Long {
+        val cardCounts = mutableMapOf<Int, Long>()
+
+        forEachIndexed { index, scratchcard ->
+            cardCounts.compute(index) { _, count ->
+                (count ?: 0) + 1
+            }
+
+            for (i in 0 until scratchcard.countOfMatchingNumbers) {
+                cardCounts.compute(index + i + 1) { _, count ->
+                    (count ?: 0) + cardCounts.getValue(index)
+                }
+            }
+        }
+
+        return cardCounts.values.sum()
     }
 }
