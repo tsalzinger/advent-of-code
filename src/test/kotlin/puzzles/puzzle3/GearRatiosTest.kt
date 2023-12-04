@@ -2,6 +2,7 @@ package puzzles.puzzle3
 
 import assertThat
 import me.salzinger.common.streamInput
+import me.salzinger.puzzles.puzzle3.GearRatios.getSumOfAllGearRatios
 import me.salzinger.puzzles.puzzle3.GearRatios.getSumOfAllNumbersAdjacentToASymbol
 import me.salzinger.puzzles.puzzle3.GearRatios.parseAsGameGrid
 import org.junit.jupiter.api.Test
@@ -15,6 +16,17 @@ class GearRatiosTest {
             .getSumOfAllNumbersAdjacentToASymbol()
             .assertThat {
                 isEqualTo(4361)
+            }
+    }
+
+    @Test
+    fun `example 1 - part 2`() {
+        "puzzles/puzzle3/puzzle-3-example-1.in"
+            .streamInput()
+            .parseAsGameGrid()
+            .getSumOfAllGearRatios()
+            .assertThat {
+                isEqualTo(467835L)
             }
     }
 }

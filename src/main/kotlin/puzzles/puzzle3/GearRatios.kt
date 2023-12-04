@@ -89,6 +89,31 @@ object GearRatios {
             }
     }
 
+    fun GameGrid.getAllGearRatios(): Map<Grid2D.Coordinate, Long> {
+        val numberMap = buildNumberMap()
+
+        return grid
+            .filter { it.value is GridValue.Symbol && it.value.symbol == '*' }
+            .mapNotNull { gearCandidateCell ->
+                val numberNeighbors = setOf(gearCandidateCell)
+                    .getNumberNeighbors(grid)
+                    .associate { numberMap.getValue(it.coordinate) }
+
+                if (numberNeighbors.size == 2) {
+                    gearCandidateCell.coordinate to numberNeighbors.values.fold(1L) { acc, i -> acc * i }
+                } else {
+                    null
+                }
+            }
+            .toMap()
+    }
+
+    fun GameGrid.getSumOfAllGearRatios(): Long {
+        return getAllGearRatios()
+            .values
+            .sum()
+    }
+
     fun GameGrid.getSumOfAllNumbersAdjacentToASymbol(): Int {
         return getAllNumbersAdjacentToASymbol()
             .values
