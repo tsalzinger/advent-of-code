@@ -34,6 +34,8 @@ class Grid2D<T>(
         fun right() = copy(column = column + 1)
         fun down() = copy(row = row + 1)
         fun left() = copy(column = column - 1)
+        fun withColumn(column: Int) = copy(column = column)
+        fun withRow(row: Int) = copy(row = row)
 
         fun getNeighbors(neighborProvider: Coordinate.() -> Set<Coordinate>): Set<Coordinate> = neighborProvider()
 
