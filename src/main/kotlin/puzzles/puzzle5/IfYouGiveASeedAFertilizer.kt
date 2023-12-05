@@ -17,6 +17,25 @@ object IfYouGiveASeedAFertilizer {
                 }
             }
         }
+
+        val seedRanges by lazy {
+            seeds.chunked(2) { (rangeStart, rangeLength) ->
+                rangeStart..<(rangeStart + rangeLength)
+            }
+        }
+
+        fun getLastCategoryRanges(): List<LongRange> {
+            return maps.fold(seedRanges) { categoryRanges, map ->
+                map.convert(categoryRanges)
+            }
+        }
+
+        fun getMinNumberOfLastCategoryRanges(): Long {
+            return getLastCategoryRanges()
+                .minOf {
+                    it.first
+                }
+        }
     }
 
     data class CategoryMapping(
@@ -38,17 +57,63 @@ object IfYouGiveASeedAFertilizer {
                 null
             }
         }
+
+        fun mapAndSplit(range: LongRange): Pair<LongRange, List<LongRange>> {
+            if (range.last < sourceRange.first || range.first > sourceRange.last) {
+                return LongRange.EMPTY to listOf(range)
+            }
+
+            val first = range.first.coerceAtLeast(sourceRange.first)
+            val last = range.last.coerceAtMost(sourceRange.last)
+
+            val mappedFirst = destinationRange.first + first - sourceRange.first
+            val mappedLast = destinationRange.first + last - sourceRange.first
+
+            return (mappedFirst..mappedLast) to listOf(
+                range.first..<first,
+                (last + 1)..range.last,
+            ).filterNot(LongRange::isEmpty)
+        }
     }
 
     data class ConverterMap(
         private val name: String,
-        private val categoryMappings: List<CategoryMapping>,
+        val categoryMappings: List<CategoryMapping>,
     ) {
+        val sortedCategoryMappings = categoryMappings.sortedBy {
+            it.sourceRange.first
+        }
+
         fun convert(value: Long): Long {
-            return categoryMappings
-                .firstNotNullOfOrNull {
-                    it.mapOrNull(value)
-                } ?: value
+            return categoryMappings.firstNotNullOfOrNull {
+                it.mapOrNull(value)
+            } ?: value
+        }
+
+        fun convert(range: LongRange): List<LongRange> {
+            val notYetMapped = mutableListOf(range)
+            val alreadyMapped = mutableListOf<LongRange>()
+
+            sortedCategoryMappings.forEach { categoryMapping ->
+                val currentUnmapped = notYetMapped.toList()
+                notYetMapped.clear()
+                currentUnmapped.forEach {
+                    val (mapped, unmapped) = categoryMapping.mapAndSplit(it)
+
+                    if (!mapped.isEmpty()) {
+                        alreadyMapped.add(mapped)
+                    }
+
+                    notYetMapped.addAll(unmapped)
+                }
+
+            }
+
+            return (alreadyMapped + notYetMapped).sortedBy { it.first }
+        }
+
+        fun convert(ranges: List<LongRange>): List<LongRange> {
+            return ranges.flatMap { convert(it) }
         }
     }
 
@@ -68,18 +133,16 @@ object IfYouGiveASeedAFertilizer {
     }
 
     fun String.toSeedList(): List<Long> {
-        return substringAfter("seeds: ")
-            .toLongList(" ")
+        return substringAfter("seeds: ").toLongList(" ")
     }
 
     fun Sequence<String>.toAlmanac(): Almanac {
-        val chunks = toList()
-            .chunkedBy {
-                when {
-                    it.isEmpty() -> ChunkEvaluation.END_CHUNK_AND_DISCARD
-                    else -> ChunkEvaluation.APPEND_TO_CHUNK
-                }
+        val chunks = toList().chunkedBy {
+            when {
+                it.isEmpty() -> ChunkEvaluation.END_CHUNK_AND_DISCARD
+                else -> ChunkEvaluation.APPEND_TO_CHUNK
             }
+        }
 
         val seedList = chunks.first().single().toSeedList()
 
