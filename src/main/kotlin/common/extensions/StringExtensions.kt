@@ -1,17 +1,17 @@
 package me.salzinger.common.extensions
 
 fun String.toIntList(vararg delimiters: String = arrayOf(",")): List<Int> {
-    return split(delimiters = delimiters).map { it.toInt() }
+    return trim().split(delimiters = delimiters).map { it.trim().toInt() }
 }
 
 fun String.toIntList(regex: Regex): List<Int> {
-    return split(regex = regex).map { it.toInt() }
+    return trim().split(regex = regex).map { it.trim().toInt() }
 }
 
 fun String.toLongList(vararg delimiters: String = arrayOf(",")): List<Long> {
-    return split(delimiters = delimiters).map { it.toLong() }
+    return trim().split(delimiters = delimiters).map { it.trim().toLong() }
 }
 
 fun String.toLongList(regex: Regex): List<Long> {
-    return split(regex = regex).map { it.toLong() }
+    return trim().split(regex = regex).map { it.trim().toLong() }
 }
