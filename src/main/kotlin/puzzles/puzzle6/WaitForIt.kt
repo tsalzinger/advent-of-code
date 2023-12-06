@@ -39,6 +39,18 @@ object WaitForIt {
         }.single()
     }
 
+    fun Sequence<String>.toRaceStats(): RaceStats {
+        return chunked(2) { (time, distance) ->
+            val times = time.substringAfter("Time:").replace(Regex("\\s+"), "").toLong()
+            val distances = distance.substringAfter("Distance:").replace(Regex("\\s+"), "").toLong()
+
+            RaceStats(
+                times,
+                distances,
+            )
+        }.single()
+    }
+
     fun List<RaceStats>.getNumberOfWaysToBeatRecordDistance(): List<Long> {
         return map {
             it.numberOfWaysToBeatRecordDistance
@@ -49,5 +61,10 @@ object WaitForIt {
         return toRacesStats()
             .getNumberOfWaysToBeatRecordDistance()
             .product()
+    }
+
+    fun Sequence<String>.getNumberOfWaysToBeatRecordDistance(): Long {
+        return toRaceStats()
+            .numberOfWaysToBeatRecordDistance
     }
 }
