@@ -1,6 +1,7 @@
 package me.salzinger.common.math
 
 import kotlin.math.abs
+import kotlin.math.max
 
 fun Int.pow(exponent: Int): Long {
     return this.toLong().pow(exponent)
@@ -37,4 +38,22 @@ fun ggt(x: Int = 0, y: Int = 0): Int {
     }
 
     return a
+}
+
+fun leastCommonMultiple(a: Long, b: Long): Long {
+    val larger = max(a, b)
+    var lcm = larger
+    while (true) {
+        if (lcm % a == 0L && lcm % b == 0L) {
+            return lcm
+        }
+        lcm += larger
+    }
+}
+
+
+fun List<Long>.leastCommonMultiple(): Long {
+    return reduce { leastCommonMultiple, number ->
+        leastCommonMultiple(leastCommonMultiple, number)
+    }
 }

@@ -1,5 +1,7 @@
 package me.salzinger.puzzles.puzzle8
 
+import me.salzinger.common.math.leastCommonMultiple
+
 object HauntedWasteland {
 
     object Instructions {
@@ -74,16 +76,71 @@ object HauntedWasteland {
             }
             .toLeftRightNetwork()
 
-        leftRightInstructions
-            .foldIndexed(leftRightNetwork["AAA"]) { index, currentNode, instruction ->
-                val nextNode = leftRightNetwork[currentNode[instruction]]
-                if (nextNode.name == "ZZZ") {
+        val startingNode = leftRightNetwork["AAA"]
+
+        return startingNode
+            .getStepCountToTargetNode(
+                leftRightNetwork,
+                leftRightInstructions
+            ) {
+                name == "ZZZ"
+            }
+    }
+
+    fun LeftRightNode.getStepCountToTargetNode(
+        network: LeftRightNetwork,
+        instructions: LeftRightInstructions,
+        isTarget: LeftRightNode.() -> Boolean,
+    ): Int {
+        instructions
+            .foldIndexed(this) { index, currentNode, instruction ->
+                val nextNode = network[currentNode[instruction]]
+                if (nextNode.isTarget()) {
                     return index + 1
                 }
 
                 nextNode
             }
 
-        throw RuntimeException("Reached block after endless iteration")
+        var currentNode = this
+        var stepCount = 0
+        val instructionsIterator = instructions.iterator()
+
+        while (!currentNode.isTarget()) {
+            stepCount++
+
+            currentNode = network[currentNode[instructionsIterator.next()]]
+        }
+
+        return stepCount
+    }
+
+    fun Sequence<String>.getParallelStepCountWithLeftRightInstructions(): Long {
+        val list = toList()
+
+        val leftRightInstructions = list.first().toLeftRightInstructions()
+
+        val leftRightNetwork = list.drop(1)
+            .filterNot { it.isEmpty() }
+            .map {
+                it.toLeftRightNode()
+            }
+            .toLeftRightNetwork()
+
+        val startingNodes = leftRightNetwork.nodeMap.values.filter { it.name.endsWith('A') }
+
+        val stepCounts = startingNodes
+            .map {
+                it.getStepCountToTargetNode(
+                    leftRightNetwork,
+                    leftRightInstructions,
+                ) {
+                    name.endsWith("Z")
+                }
+            }
+
+        return stepCounts
+            .map { it.toLong() }
+            .leastCommonMultiple()
     }
 }

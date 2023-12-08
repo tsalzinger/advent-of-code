@@ -4,6 +4,7 @@ import assertIterable
 import assertThat
 import me.salzinger.common.streamInput
 import me.salzinger.puzzles.puzzle8.HauntedWasteland
+import me.salzinger.puzzles.puzzle8.HauntedWasteland.getParallelStepCountWithLeftRightInstructions
 import me.salzinger.puzzles.puzzle8.HauntedWasteland.getStepCountWithLeftRightInstructions
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -29,6 +30,17 @@ class HauntedWastelandTest {
                 isEqualTo(6)
             }
     }
+
+    @Test
+    fun `example 3 - part 2`() {
+        "puzzles/puzzle8/puzzle-8-example-3.in"
+            .streamInput()
+            .getParallelStepCountWithLeftRightInstructions()
+            .assertThat {
+                isEqualTo(6)
+            }
+    }
+
 
     @Nested
     inner class LeftRightInstructions {
