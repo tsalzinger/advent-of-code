@@ -13,6 +13,11 @@ inline fun <T : Iterable<S>, S> T.assertIterable(block: IterableAssert<S>.() -> 
     return this
 }
 
+inline fun <T : Sequence<S>, S> T.assertIterable(block: IterableAssert<S>.() -> Unit): T {
+    Assertions.assertThat(this.asIterable()).run(block)
+    return this
+}
+
 inline fun Boolean.assertBoolean(block: AbstractBooleanAssert<*>.() -> Unit): Boolean {
     Assertions.assertThat(this).run(block)
     return this
