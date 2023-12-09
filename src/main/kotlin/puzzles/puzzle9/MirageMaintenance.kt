@@ -48,4 +48,10 @@ object MirageMaintenance {
             it.predictNextValue().toLong()
         }.sum()
     }
+
+    fun Sequence<String>.getSumOfPreviousExtrapolatedValues(): Long {
+        return map {
+            it.toIntList(" ").reversed().predictNextValue().toLong()
+        }.sum()
+    }
 }

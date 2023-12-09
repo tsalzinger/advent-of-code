@@ -6,6 +6,7 @@ import me.salzinger.common.extensions.toIntList
 import me.salzinger.common.streamInput
 import me.salzinger.puzzles.puzzle9.MirageMaintenance.getStackOfStepDifferences
 import me.salzinger.puzzles.puzzle9.MirageMaintenance.getSumOfExtrapolatedValues
+import me.salzinger.puzzles.puzzle9.MirageMaintenance.getSumOfPreviousExtrapolatedValues
 import me.salzinger.puzzles.puzzle9.MirageMaintenance.predictNextValue
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
@@ -20,6 +21,16 @@ class MirageMaintenanceTest {
             .getSumOfExtrapolatedValues()
             .assertThat {
                 isEqualTo(114L)
+            }
+    }
+
+    @Test
+    fun `example 1 - part 2`() {
+        "puzzles/puzzle9/puzzle-9-example-1.in"
+            .streamInput()
+            .getSumOfPreviousExtrapolatedValues()
+            .assertThat {
+                isEqualTo(2L)
             }
     }
 
