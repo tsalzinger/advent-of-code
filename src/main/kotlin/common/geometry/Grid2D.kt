@@ -80,7 +80,7 @@ class Grid2D<T>(
             .toSet()
     }
 
-    fun getNeighborsOf(cell: Cell<T>): Set<Cell<T>> {
+    fun <S : T> getNeighborsOf(cell: Cell<S>): Set<Cell<T>> {
         return getNeighborsOf(cell.coordinate)
     }
 
