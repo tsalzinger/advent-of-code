@@ -1,5 +1,7 @@
 package me.salzinger.common
 
+import kotlin.math.abs
+
 class Grid2D<T>(
     values: List<List<T>>,
     private val neighborProvider: (Coordinate.() -> Set<Coordinate>) = Coordinate.NeighborModes.CROSS,
@@ -38,6 +40,9 @@ class Grid2D<T>(
         fun withRow(row: Int) = copy(row = row)
 
         fun getNeighbors(neighborProvider: Coordinate.() -> Set<Coordinate>): Set<Coordinate> = neighborProvider()
+
+        fun getManhattenDistanceTo(coordinate: Coordinate) =
+            abs(column - coordinate.column) + abs(row - coordinate.row)
 
         object NeighborModes {
             val CROSS: Coordinate.() -> Set<Coordinate> = {
