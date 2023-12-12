@@ -85,49 +85,77 @@ object HotSprings {
         }
     }
 
-    fun List<List<SpringGroup>>.fitAll(groupSizes: List<Int>): List<List<SpringGroup>> {
-        return groupSizes.fold(this) { currentPossibilities, groupSize ->
-            currentPossibilities
-                .flatMap {
-                    it.fit(groupSize)
+    fun List<List<SpringGroup>>.fitAll(groupSizes: List<Int>): Map<List<SpringGroup>, Long> {
+        val distinctCount = groupBy { it }.mapValues { it.value.count().toLong() }
+
+        var remainingGroupSize = groupSizes.sum()
+
+        return groupSizes.fold(distinctCount) { currentPossibilities, groupSize ->
+            val nextPossibilities = currentPossibilities
+                .entries
+                .flatMap { (springGroups, count) ->
+                    springGroups.fit(groupSize)
+                        .map {
+                            it to count
+                        }
                 }
+
+            remainingGroupSize -= groupSize
+
+            nextPossibilities.groupBy {
+                it.first
+            }.mapValues { (_, springGroupsToCount) ->
+                springGroupsToCount.sumOf { it.second }
+            }.filterKeys { springGroups ->
+                springGroups.sumOf { it.springs.count() } >= remainingGroupSize
+            }
         }
     }
 
-    fun String.toSpringGroupsAndGroupSizes(): Pair<List<SpringGroup>, List<Int>> {
+    fun String.toSpringGroupsAndGroupSizes(repetitions: Int): Pair<List<SpringGroup>, List<Int>> {
         val (records, contiguousGroupSizesInput) = split(" ")
         val contiguousGroupSizes = contiguousGroupSizesInput.toIntList(",")
 
-        val possibleDamagedSpringGroups = records.trim('.').split(".")
+        val possibleDamagedSpringGroups = "${records}?"
+            .repeat(repetitions)
+            .dropLast(1)
+            .trim('.')
+            .split(".")
             .map { it.toSpringGroup() }
 
-        return possibleDamagedSpringGroups to contiguousGroupSizes
+        return possibleDamagedSpringGroups to buildList {
+            repeat(repetitions) {
+                addAll(contiguousGroupSizes)
+            }
+        }
     }
 
-    fun String.getPossibleSpringArrangements(): Int {
-        val (springGroups, groupSizes) = toSpringGroupsAndGroupSizes()
+    fun String.getPossibleSpringArrangements(repetitions: Int): Long {
+        val (springGroups, groupSizes) = toSpringGroupsAndGroupSizes(repetitions)
 
         return listOf(springGroups)
             .fitAll(groupSizes)
-            .filter { springGroups ->
+            .filterKeys { springGroups ->
                 springGroups
                     .all {
                         Spring.Damaged !in it.springs
                     }
-            }.count {
-                it.isNotEmpty()
-            }
+            }.values.sum()
     }
 
 
-    fun Sequence<String>.mapToNumberOfPossibleSpringArrangements() = map {
-        it.getPossibleSpringArrangements()
+    fun Sequence<String>.mapToNumberOfPossibleSpringArrangements(repetitions: Int = 1) = map {
+        it.getPossibleSpringArrangements(repetitions)
     }
 
     fun Sequence<String>.getSumOfPossibleSpringArrangements(): Long {
         return mapToNumberOfPossibleSpringArrangements()
-            .sumOf {
-                it.toLong()
-            }
+            .sum()
+    }
+
+
+    fun Sequence<String>.getSumOfPossibleSpringArrangementsUnfolded(): Long {
+        return mapToNumberOfPossibleSpringArrangements(repetitions = 5)
+            .sum()
     }
 }
