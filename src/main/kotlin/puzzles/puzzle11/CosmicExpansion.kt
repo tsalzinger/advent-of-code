@@ -1,11 +1,14 @@
 package me.salzinger.puzzles.puzzle11
 
 import me.salzinger.common.Grid2D
+import kotlin.math.max
+import kotlin.math.min
 
 object CosmicExpansion {
     sealed interface ObservationType {
         data object EmptySpace : ObservationType
         data object Galaxy : ObservationType
+        data class ExpandedSpace(val size: Int) : ObservationType
     }
 
     fun Sequence<String>.toObservedImage(): Grid2D<ObservationType> {
@@ -36,7 +39,7 @@ object CosmicExpansion {
         return emptyRows to emptyColumns
     }
 
-    fun Grid2D<ObservationType>.expandEmptySpace(): Grid2D<ObservationType> {
+    fun Grid2D<ObservationType>.expandEmptySpace(expansionFactor: Int = 2): Grid2D<ObservationType> {
         val (emptyRows, emptyColumns) = findEmptyRowsAndColumns()
 
         val rowValues = map { it.value }
@@ -46,14 +49,16 @@ object CosmicExpansion {
             }
             .toMutableList()
 
+        val expandedSpace = ObservationType.ExpandedSpace(expansionFactor)
+
         emptyRows.sortedDescending().forEach { emptyRowIndex ->
-            rowValues.add(emptyRowIndex, MutableList(columns) { ObservationType.EmptySpace })
+            rowValues[emptyRowIndex].replaceAll { expandedSpace }
         }
 
         emptyColumns.sortedDescending().forEach { emptyColumnIndex ->
             rowValues
                 .forEach { columnValues ->
-                    columnValues.add(emptyColumnIndex, ObservationType.EmptySpace)
+                    columnValues[emptyColumnIndex] = expandedSpace
                 }
         }
 
@@ -78,21 +83,66 @@ object CosmicExpansion {
             }
     }
 
-    fun Sequence<Pair<Grid2D.Coordinate, Grid2D.Coordinate>>.mapToManhattenDistances(): Sequence<Int> {
+    fun Sequence<Pair<Grid2D.Coordinate, Grid2D.Coordinate>>.mapToSpaceDistances(
+        expandedRows: Set<Int>,
+        expandedColumns: Set<Int>,
+        expansionFactor: Int,
+    ): Sequence<Long> {
         return map {
-            it.getManhattenDistance()
+            it.getSpaceDistance(
+                expandedRows,
+                expandedColumns,
+                expansionFactor,
+            )
         }
     }
 
-    fun Pair<Grid2D.Coordinate, Grid2D.Coordinate>.getManhattenDistance(): Int {
-        return first.getManhattenDistanceTo(second)
+    fun Pair<Grid2D.Coordinate, Grid2D.Coordinate>.getSpaceDistance(
+        expandedRows: Set<Int>,
+        expandedColumns: Set<Int>,
+        expansionFactor: Int,
+    ): Long {
+        val rowDistance = first.getRowRangeBetween(second).sumOf {
+            if (it in expandedRows) {
+                expansionFactor
+            } else {
+                1
+            }
+        }
+
+        val columnDistance = first.getColumnRangeBetween(second).sumOf {
+            if (it in expandedColumns) {
+                expansionFactor
+            } else {
+                1
+            }
+        }
+
+        return rowDistance.toLong() + columnDistance
     }
 
-    fun Sequence<String>.getSumOfGalaxyPairDistances(): Long {
-        return toObservedImage()
-            .expandEmptySpace()
+    fun Grid2D.Coordinate.getRowRangeBetween(coordinate: Grid2D.Coordinate): IntRange {
+        val minRow = min(row, coordinate.row)
+        val maxRow = max(row, coordinate.row)
+
+        return minRow..<maxRow
+    }
+
+    fun Grid2D.Coordinate.getColumnRangeBetween(coordinate: Grid2D.Coordinate): IntRange {
+        val minColumn = min(column, coordinate.column)
+        val maxColumn = max(column, coordinate.column)
+
+        return minColumn..<maxColumn
+    }
+
+    fun Sequence<String>.getSumOfGalaxyPairDistances(expansionFactor: Int = 2): Long {
+        val observedImage = toObservedImage()
+
+        val (expandedRows, expandedColumns) = observedImage.findEmptyRowsAndColumns()
+
+        return observedImage
             .getAllGalaxyPairs()
-            .mapToManhattenDistances()
+            .mapToSpaceDistances(expandedRows, expandedColumns, expansionFactor)
             .sumOf { it.toLong() }
     }
 }
