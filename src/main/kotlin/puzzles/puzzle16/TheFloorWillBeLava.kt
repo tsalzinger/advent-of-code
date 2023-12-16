@@ -116,34 +116,68 @@ object TheFloorWillBeLava {
         }
     }
 
+    fun Grid2D<Tile>.countEnergizedTiles(startingDirection: Direction, startingCoordinate: Grid2D.Coordinate): Int {
+        var nextConfiguration = listOf(
+            startingDirection to startingCoordinate
+        )
+        val alreadyEvaluated = mutableSetOf<Pair<Direction, Grid2D.Coordinate>>()
+
+        while (nextConfiguration.isNotEmpty()) {
+            nextConfiguration = nextConfiguration
+                .flatMap { (direction, coordinate) ->
+                    this[coordinate].value
+                        .energize()
+                        .getBeamOutputDirections(direction)
+                        .map { newDirection ->
+                            newDirection to coordinate(newDirection)
+                        }
+                }
+                .filter { (_, coordinate) -> coordinate in this }
+                .filter { it !in alreadyEvaluated }
+                .distinct()
+                .also(alreadyEvaluated::addAll)
+        }
+
+        return count {
+            it.value.energized
+        }
+    }
+
+    fun Grid2D<Tile>.reset(): Grid2D<Tile> {
+        forEach { it.value.energized = false }
+        return this
+    }
+
     fun Sequence<String>.getCountOfEnergizedTiles(): Int {
         return toTiles()
             .toList()
             .run(::Grid2D)
-            .also { grid ->
-                var nextCoordinates = listOf(
-                    Direction.RIGHT to Grid2D.Coordinate(0, 0)
+            .countEnergizedTiles(Direction.RIGHT, Grid2D.Coordinate(0, 0))
+    }
+
+    fun Sequence<String>.getMaxCountOfEnergizedTiles(): Int {
+        val grid = toTiles()
+            .toList()
+            .run(::Grid2D)
+
+        val startingConfigurations =
+            grid.rowsRange.flatMap { row ->
+                listOf(
+                    Direction.RIGHT to Grid2D.Coordinate(row, 0),
+                    Direction.LEFT to Grid2D.Coordinate(row, grid.lastColumn),
                 )
-                val alreadyEvaluated = mutableSetOf<Pair<Direction, Grid2D.Coordinate>>()
-
-                while (nextCoordinates.isNotEmpty()) {
-
-                    nextCoordinates = nextCoordinates
-                        .flatMap { (direction, coordinate) ->
-                            grid[coordinate].value
-                                .energize()
-                                .getBeamOutputDirections(direction)
-                                .map { newDirection ->
-                                    newDirection to coordinate(newDirection)
-                                }
-                        }
-                        .filter { (_, coordinate) -> coordinate in grid }
-                        .filter { it !in alreadyEvaluated }
-                        .also(alreadyEvaluated::addAll)
-                }
+            } + grid.columnsRange.flatMap { column ->
+                listOf(
+                    Direction.DOWN to Grid2D.Coordinate(0, column),
+                    Direction.UP to Grid2D.Coordinate(grid.lastRow, column),
+                )
             }
-            .count {
-                it.value.energized
+
+        return startingConfigurations
+            .map { (direction, coordinate) ->
+                grid.countEnergizedTiles(direction, coordinate)
+                    .also { grid.reset() }
             }
+            .max()
     }
 }

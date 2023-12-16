@@ -19,6 +19,15 @@ class Grid2D<T>(
         }
     }.toMap()
 
+    val rowsRange: IntRange
+        get() = 0..<rows
+
+    val columnsRange: IntRange
+        get() = 0..<columns
+
+    val lastRow = rows - 1
+    val lastColumn = columns - 1
+
     data class Cell<T>(val coordinate: Coordinate, val value: T)
 
     fun <R> transformValues(transformer: (Cell<T>) -> R): Grid2D<R> {
