@@ -76,6 +76,11 @@ class Grid2D<T>(
         return cells[coordinate]
     }
 
+    operator fun get(coordinate: Coordinate): Cell<T> = getCellAt(coordinate)
+    operator fun contains(coordinate: Coordinate): Boolean {
+        return coordinate in cells
+    }
+
     fun getNeighborsOf(coordinate: Coordinate): Set<Cell<T>> {
         return coordinate
             .getNeighbors(neighborProvider)
