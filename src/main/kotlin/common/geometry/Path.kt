@@ -1,8 +1,6 @@
 package me.salzinger.common.geometry
 
 import me.salzinger.common.Grid2D
-import me.salzinger.puzzles.puzzle16.TheFloorWillBeLava
-import me.salzinger.puzzles.puzzle16.TheFloorWillBeLava.invoke
 
 
 data class Path(
@@ -46,7 +44,7 @@ data class Path(
         )
     }
 
-    operator fun plus(direction: TheFloorWillBeLava.Direction): Path {
+    operator fun plus(direction: Direction): Path {
         return Path(
             coordinates + coordinates.last().invoke(direction)
         )
