@@ -1,7 +1,6 @@
 package me.salzinger.puzzles.puzzle2
 
 import me.salzinger.common.extensions.toIntList
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.absoluteValue
 import kotlin.math.sign
 
