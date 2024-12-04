@@ -7,6 +7,10 @@ enum class Direction {
     RIGHT,
     DOWN,
     LEFT,
+    RIGHT_DOWN,
+    DOWN_LEFT,
+    LEFT_UP,
+    UP_RIGHT,
 }
 
 fun Direction.isOppositeOf(direction: Direction): Boolean {
@@ -15,6 +19,10 @@ fun Direction.isOppositeOf(direction: Direction): Boolean {
         Direction.RIGHT -> direction == Direction.LEFT
         Direction.DOWN -> direction == Direction.UP
         Direction.LEFT -> direction == Direction.RIGHT
+        Direction.RIGHT_DOWN -> direction == Direction.LEFT_UP
+        Direction.DOWN_LEFT -> direction == Direction.UP_RIGHT
+        Direction.LEFT_UP -> direction == Direction.RIGHT_DOWN
+        Direction.UP_RIGHT -> direction == Direction.DOWN_LEFT
     }
 }
 
@@ -24,6 +32,10 @@ operator fun Grid2D.Coordinate.invoke(direction: Direction): Grid2D.Coordinate {
         Direction.RIGHT -> right()
         Direction.DOWN -> down()
         Direction.LEFT -> left()
+        Direction.RIGHT_DOWN -> rightDown()
+        Direction.DOWN_LEFT -> downLeft()
+        Direction.LEFT_UP -> leftUp()
+        Direction.UP_RIGHT -> upRight()
     }
 }
 
@@ -33,6 +45,10 @@ fun Grid2D.Coordinate.getDirectionToNeighbor(neighbor: Grid2D.Coordinate): Direc
         right() -> Direction.RIGHT
         down() -> Direction.DOWN
         left() -> Direction.LEFT
+        rightDown() -> Direction.RIGHT_DOWN
+        downLeft() -> Direction.DOWN_LEFT
+        leftUp() -> Direction.LEFT_UP
+        upRight() -> Direction.UP_RIGHT
         else -> throw RuntimeException("$neighbor is not a neighbor of $this")
     }
 }

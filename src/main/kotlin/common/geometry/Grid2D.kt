@@ -45,6 +45,10 @@ class Grid2D<T>(
         fun right() = copy(column = column + 1)
         fun down() = copy(row = row + 1)
         fun left() = copy(column = column - 1)
+        fun rightDown() = right().down()
+        fun downLeft() = down().left()
+        fun leftUp() = left().up()
+        fun upRight() = up().right()
         fun withColumn(column: Int) = copy(column = column)
         fun withRow(row: Int) = copy(row = row)
 
@@ -74,6 +78,10 @@ class Grid2D<T>(
                     left().up(),
                 )
             }
+        }
+
+        companion object {
+            val ZERO = Coordinate(0, 0)
         }
     }
 
@@ -105,6 +113,18 @@ class Grid2D<T>(
 
     override fun iterator(): Iterator<Cell<T>> {
         return cells.values.iterator()
+    }
+
+    fun <R> mapRows(transform: List<Cell<T>>.(rowIndex: Int) -> R): List<R> {
+        return chunked(columns).mapIndexed { rowIndex, row -> row.transform(rowIndex) }
+    }
+
+    fun <R> mapColumns(transform: List<Cell<T>>.(rowIndex: Int) -> R): List<R> {
+        return (0..<columns).map { columnIndex ->
+            (0..<rows).map { rowIndex ->
+                getCellAt(Coordinate(row = rowIndex, column = columnIndex))
+            }
+        }.mapIndexed { columnIndex, column -> column.transform(columnIndex) }
     }
 }
 
