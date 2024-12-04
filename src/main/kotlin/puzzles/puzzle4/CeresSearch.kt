@@ -2,6 +2,7 @@ package me.salzinger.puzzles.puzzle4
 
 import me.salzinger.common.Grid2D
 import me.salzinger.common.Grid2D.Coordinate
+import me.salzinger.common.toConsoleString
 
 object CeresSearch {
     private val SEARCH_STRING = "XMAS"
@@ -22,6 +23,38 @@ object CeresSearch {
             grid.countRightDown(SEARCH_STRING.reversed()),
             grid.countUpRight(SEARCH_STRING.reversed()),
         ).sum()
+    }
+
+    fun Sequence<String>.`countOccurrencesOfX-mas`(): Int {
+        val searchStrings = setOf("MAS", "SAM")
+
+        val grid = Grid2D(
+            values = map { it.toCharArray().toList() }.toList(),
+            neighborProvider = Coordinate.NeighborModes.RING,
+        )
+
+
+        return grid.filter { cell -> cell.value == 'A' }
+            .count { cell ->
+                grid.leftUpRightDownStringAround(cell) in searchStrings &&
+                        grid.downLeftUpRightStringAround(cell) in searchStrings
+            }
+    }
+
+    fun Grid2D<Char>.leftUpRightDownStringAround(cell: Grid2D.Cell<Char>): String {
+        return listOfNotNull(
+            getCellAtOrNull(cell.coordinate.leftUp()),
+            cell,
+            getCellAtOrNull(cell.coordinate.rightDown()),
+        ).asString()
+    }
+
+    fun Grid2D<Char>.downLeftUpRightStringAround(cell: Grid2D.Cell<Char>): String {
+        return listOfNotNull(
+            getCellAtOrNull(cell.coordinate.downLeft()),
+            cell,
+            getCellAtOrNull(cell.coordinate.upRight()),
+        ).asString()
     }
 
     fun Grid2D<Char>.countRight(searchString: String): Int {

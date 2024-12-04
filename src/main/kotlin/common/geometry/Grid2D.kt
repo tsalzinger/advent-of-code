@@ -69,13 +69,13 @@ class Grid2D<T>(
             val RING: Coordinate.() -> Set<Coordinate> = {
                 setOf(
                     up(),
-                    up().right(),
+                    upRight(),
                     right(),
-                    right().down(),
+                    rightDown(),
                     down(),
-                    down().left(),
+                    downLeft(),
                     left(),
-                    left().up(),
+                    leftUp(),
                 )
             }
         }
