@@ -38,6 +38,23 @@ object PrintQueue {
             .sumOf { sortedUpdatePages -> sortedUpdatePages.get(sortedUpdatePages.size / 2) }
     }
 
+    fun Sequence<String>.sumOfMiddlePageOfUnsortedUpdatesAfterSorting(): Int {
+
+        val (orderingRulesSpec, updatesSpec) = getSpecs()
+
+        val orderingRulePairs = orderingRulesSpec
+            .flatMap { it.toIntList("|") }
+            .toPairs()
+
+        val comparator = OrderingRuleComparator(orderingRulePairs)
+
+        return updatesSpec
+            .map { it.toIntList(",") }
+            .filter { updatePages -> updatePages.sortedWith(comparator) != updatePages }
+            .map { sortedUpdatePages -> sortedUpdatePages.sortedWith(comparator) }
+            .sumOf { sortedUpdatePages -> sortedUpdatePages.get(sortedUpdatePages.size / 2) }
+    }
+
     private fun Sequence<String>.getSpecs(): List<List<String>> = toList()
         .chunkedBy {
             if (it.isNotEmpty()) {
