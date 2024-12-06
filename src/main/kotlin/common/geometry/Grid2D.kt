@@ -1,10 +1,13 @@
 package me.salzinger.common
 
+import me.salzinger.common.Grid2D.Coordinate
 import kotlin.math.abs
+
+typealias NeighborProvider = Coordinate.() -> Set<Coordinate>
 
 class Grid2D<T>(
     values: List<List<T>>,
-    private val neighborProvider: (Coordinate.() -> Set<Coordinate>) = Coordinate.NeighborModes.CROSS,
+    private val neighborProvider: NeighborProvider = Coordinate.NeighborModes.CROSS,
 ) :
     Iterable<Grid2D.Cell<T>> {
     val rows = values.count()
