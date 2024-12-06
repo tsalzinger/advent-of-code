@@ -5,9 +5,7 @@ import me.salzinger.common.Grid2D.Coordinate
 import me.salzinger.common.extensions.toGrid2D
 import me.salzinger.common.geometry.Direction
 import me.salzinger.common.geometry.invoke
-import me.salzinger.puzzles.puzzle6.GuardGallivant.LabTile.Empty
-import me.salzinger.puzzles.puzzle6.GuardGallivant.LabTile.Guard
-import me.salzinger.puzzles.puzzle6.GuardGallivant.LabTile.Obstacle
+import me.salzinger.puzzles.puzzle6.GuardGallivant.LabTile.*
 
 object GuardGallivant {
     sealed class LabTile(val representation: Char) {
@@ -42,7 +40,7 @@ object GuardGallivant {
         while (currentGuardPosition in labMap) {
             visitedPositions += currentGuardPosition
 
-            while(!labMap.canMove(currentGuardPosition, currentDirection)) {
+            while (!labMap.canMove(currentGuardPosition, currentDirection)) {
                 currentDirection = currentDirection.turnRight()
             }
 
@@ -52,11 +50,64 @@ object GuardGallivant {
         return visitedPositions.size
     }
 
+    fun Grid2D<LabTile>.doesLoop(): Boolean {
+        val startingGuardPosition = first { cell -> cell.value == Guard }.coordinate
+        var currentDirection = Direction.UP
+        var currentGuardPosition = startingGuardPosition
+        val visitedPositions = mutableSetOf<Pair<Coordinate, Direction>>()
+
+        while (currentGuardPosition in this && (currentGuardPosition to currentDirection) !in visitedPositions) {
+            visitedPositions += currentGuardPosition to currentDirection
+
+            while (!canMove(currentGuardPosition, currentDirection)) {
+                currentDirection = currentDirection.turnRight()
+            }
+
+            currentGuardPosition = currentGuardPosition(currentDirection)
+        }
+
+        return (currentGuardPosition to currentDirection) in visitedPositions
+    }
+
+    fun Sequence<String>.countPossibleObstacleLocationsToLoop(): Int {
+        val labMap = map { row ->
+            row.map {
+                when (it) {
+                    '^' -> Guard
+                    '#' -> Obstacle
+                    '.' -> Empty.NotVisited
+                    else -> error("Unsupported character: $it")
+                }
+            }
+        }
+            .toList()
+            .toGrid2D()
+
+        return (0..<labMap.rows).asSequence()
+            .flatMap { rowIndex ->
+                (0..<labMap.columns).asSequence().map { columnIndex ->
+                    rowIndex to columnIndex
+                }
+            }
+            .filter { (rowIndex, columnIndex) ->
+                labMap[Coordinate(rowIndex, columnIndex)].value == Empty.NotVisited
+            }
+            .map { (rowIndex, columnIndex) ->
+                labMap.transformValues { cell ->
+                    if (cell.coordinate == Coordinate(rowIndex, columnIndex)) {
+                        Obstacle
+                    } else {
+                        cell.value
+                    }
+                }
+            }
+            .count { grid -> grid.doesLoop() }
+    }
+
     fun Grid2D<LabTile>.canMove(currentPosition: Coordinate, direction: Direction): Boolean {
         return when (this.getCellAtOrNull(currentPosition(direction))?.value) {
-            Empty.NotVisited, Empty.Visited, null -> return true
+            Guard, Empty.NotVisited, Empty.Visited, null -> return true
             Obstacle -> return false
-            Guard -> error("no second guard expected")
         }
     }
 
