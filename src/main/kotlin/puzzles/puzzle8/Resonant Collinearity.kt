@@ -7,6 +7,37 @@ import me.salzinger.common.geometry.Point2D
 
 object `Resonant Collinearity` {
     fun Sequence<String>.countUniqueAntinodeLocations(): Int {
+        return getUniqueCount { (p1, p2) ->
+            val diff = p1.vectorTo(p2)
+
+            listOf(
+                p1 - diff,
+                p2 + diff,
+            ).filter { it in this }
+        }
+    }
+
+    fun Sequence<String>.countUniqueAntinodeLocationsWithResonantHarmonics(): Int {
+        return getUniqueCount { (p1, p2) ->
+            val diff = p1.vectorTo(p2)
+            var antinodes = mutableListOf<Point2D>()
+            var mutliplier = 0
+            do {
+                var nextAntinodes = listOf(
+                    p1 - diff * mutliplier,
+                    p2 + diff * mutliplier,
+                ).filter { it in this }
+                mutliplier++
+                antinodes += nextAntinodes
+            } while (nextAntinodes.isNotEmpty())
+
+            antinodes
+        }
+    }
+
+    private fun Sequence<String>.getUniqueCount(
+        antinodeLocationProvider: Grid2D<Char>.(points: Pair<Point2D, Point2D>) -> List<Point2D>
+    ): Int {
         val grid = toGrid2D()
         val antennaLocations = grid
             .filter { cell -> cell.value != '.' }
@@ -21,15 +52,9 @@ object `Resonant Collinearity` {
                 it.value
                     .permutate()
             }
-            .flatMap { (p1, p2) ->
-                val diff = p1.vectorTo(p2)
-
-                listOf(
-                    p1 - diff,
-                    p2 + diff,
-                )
+            .flatMap {
+                grid.antinodeLocationProvider(it)
             }
-            .filter { it in grid }
             .toSet()
             .size
     }
