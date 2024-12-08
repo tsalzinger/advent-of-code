@@ -55,3 +55,11 @@ fun <T> List<List<T>>.toGrid2D(neighborProvider: NeighborProvider? = null): Grid
         Grid2D(this)
     }
 }
+
+fun <T> List<T>.permutate(): Sequence<Pair<T, T>> {
+    return asSequence().flatMapIndexed { index, element ->
+        drop(index + 1).map {
+            element to it
+        }
+    }
+}
