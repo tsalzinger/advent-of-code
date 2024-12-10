@@ -9,17 +9,99 @@ object `Disk Fragmenter` {
             .checksum()
     }
 
-    fun Sequence<String>.compactedUnfragmentedFilesystemChecksum(): Long {
-        return single()
+    fun Sequence<String>.compactUnfragmentedUnfragmentedFilesystemChecksum(): Long {
+        val diskMap = single()
             .map { "$it".toInt() }
-            .toDiskBlockGroups()
-            .compactUnfragmented()
-            .flatMap { diskBlockGroup ->
-                List(diskBlockGroup.length) {
-                    diskBlockGroup.diskBlock
+
+        val fileList = diskMap
+            .chunked(2)
+            .mapIndexed { index, chunk ->
+                File(
+                    id = index,
+                    length = chunk.first(),
+                ).apply {
+                    freeSpaceAfter = chunk.getOrNull(1) ?: 0
                 }
             }
-            .checksum()
+            .windowed(2)
+            .onEach { (first, second) ->
+                first.nextFile = second
+                second.previousFile = first
+            }
+            .first()
+            .first()
+
+        fileList
+            .reversed()
+            .onEach { file ->
+                fileList
+                    .firstOrNull {
+                        if (it == file) {
+                            return@onEach
+                        }
+                        it.freeSpaceAfter >= file.length
+                    }
+                    ?.also {
+                        file.moveTo(it)
+                    }
+            }
+
+        return fileList.flatMap { file ->
+            List(file.length) {
+                DiskBlock.File(file.id)
+            } + List(file.freeSpaceAfter) {
+                DiskBlock.FreeSpace
+            }
+        }.checksum()
+    }
+
+    class File(
+        val id: Int,
+        val length: Int,
+    ) : Iterable<File> {
+        var nextFile: File? = null
+        var freeSpaceAfter: Int = 0
+
+        var previousFile: File? = null
+        val freeSpaceBefore: Int
+            get() = previousFile?.freeSpaceAfter ?: 0
+
+        override fun toString(): String {
+            val file = List(length) { id }
+            val free = List(freeSpaceAfter) { "." }
+                .takeUnless { it.isEmpty() }
+
+            return "$file${free ?: ""}${nextFile ?: ""}"
+        }
+
+        override fun iterator(): Iterator<File> {
+            return object : Iterator<File> {
+                private var currentFile: File? = this@File
+
+                override fun hasNext() = currentFile != null
+
+                override fun next(): File = currentFile!!.also {
+                    currentFile = currentFile?.nextFile
+                }
+            }
+        }
+
+        fun moveTo(space: File) {
+            check(space.freeSpaceAfter >= length) {}
+
+            // cut out
+            nextFile?.previousFile = previousFile
+            previousFile?.nextFile = nextFile
+            previousFile?.freeSpaceAfter += (freeSpaceAfter + length)
+
+            // insert
+            freeSpaceAfter = space.freeSpaceAfter - length
+            previousFile = space
+            nextFile = space.nextFile
+            nextFile?.previousFile = this
+            space.nextFile = this
+            space.freeSpaceAfter = 0
+        }
     }
 
     private fun List<DiskBlockGroup>.compactUnfragmented(): List<DiskBlockGroup> {
