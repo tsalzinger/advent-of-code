@@ -51,4 +51,30 @@ object `Plutonian Pebbles` {
 
         return stones.flatten().count()
     }
+
+    val cache = mutableMapOf<Int, MutableMap<Long, Long>>()
+
+    fun Long.getNumberOfStones(blinks: Int): Long {
+        return if (blinks == 0) {
+            1L
+        } else {
+            cache[blinks]?.get(this) ?: rules
+                .first { it.isApplicable(this) }
+                .apply(this)
+                .sumOf {
+                    it.getNumberOfStones(blinks - 1)
+                }
+                .also {
+                    cache.getOrPut(blinks) {
+                        mutableMapOf<Long, Long>()
+                    }.put(this, it)
+                }
+        }
+    }
+
+    fun Sequence<String>.countStonesAfterBlinking75Times(): Long {
+        return single()
+            .toLongList(" ")
+            .sumOf { it.getNumberOfStones(75) }
+    }
 }
