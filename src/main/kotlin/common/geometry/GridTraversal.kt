@@ -26,6 +26,32 @@ fun Direction.isOppositeOf(direction: Direction): Boolean {
     }
 }
 
+fun Direction.rotate90DegreesClockwise(): Direction {
+    return when (this) {
+        Direction.UP -> Direction.RIGHT
+        Direction.RIGHT -> Direction.DOWN
+        Direction.DOWN -> Direction.LEFT
+        Direction.LEFT -> Direction.UP
+        Direction.RIGHT_DOWN -> Direction.UP_RIGHT
+        Direction.DOWN_LEFT -> Direction.RIGHT_DOWN
+        Direction.LEFT_UP -> Direction.DOWN_LEFT
+        Direction.UP_RIGHT -> Direction.LEFT_UP
+    }
+}
+
+fun Direction.rotate90DegreesCounterclockwise(): Direction {
+    return when (this) {
+        Direction.UP -> Direction.LEFT
+        Direction.RIGHT -> Direction.UP
+        Direction.DOWN -> Direction.RIGHT
+        Direction.LEFT -> Direction.DOWN
+        Direction.RIGHT_DOWN -> Direction.UP_RIGHT
+        Direction.DOWN_LEFT -> Direction.RIGHT_DOWN
+        Direction.LEFT_UP -> Direction.DOWN_LEFT
+        Direction.UP_RIGHT -> Direction.LEFT_UP
+    }
+}
+
 operator fun Grid2D.Coordinate.invoke(direction: Direction): Grid2D.Coordinate {
     return when (direction) {
         Direction.UP -> up()

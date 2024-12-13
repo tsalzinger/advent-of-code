@@ -1,6 +1,7 @@
 package me.salzinger.common
 
 import me.salzinger.common.Grid2D.Coordinate
+import me.salzinger.common.geometry.Direction
 import kotlin.math.abs
 
 typealias NeighborProvider = Coordinate.() -> Set<Coordinate>
@@ -128,6 +129,19 @@ class Grid2D<T>(
                 getCellAt(Coordinate(row = rowIndex, column = columnIndex))
             }
         }.mapIndexed { columnIndex, column -> column.transform(columnIndex) }
+    }
+}
+
+fun Coordinate.nextIn(direction: Direction): Coordinate {
+    return when (direction) {
+        Direction.UP -> up()
+        Direction.RIGHT -> right()
+        Direction.DOWN -> down()
+        Direction.LEFT -> left()
+        Direction.RIGHT_DOWN -> rightDown()
+        Direction.DOWN_LEFT -> downLeft()
+        Direction.LEFT_UP -> leftUp()
+        Direction.UP_RIGHT -> upRight()
     }
 }
 
