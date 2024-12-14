@@ -2,6 +2,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
     kotlin("jvm") version "2.1.0"
+    `java-library`
 }
 
 group = "me.salzinger"
