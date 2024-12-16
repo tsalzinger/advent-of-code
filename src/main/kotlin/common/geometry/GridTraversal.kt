@@ -26,6 +26,19 @@ fun Direction.isOppositeOf(direction: Direction): Boolean {
     }
 }
 
+fun Direction.flip(): Direction {
+    return when (this) {
+        Direction.UP -> Direction.DOWN
+        Direction.RIGHT -> Direction.LEFT
+        Direction.DOWN -> Direction.UP
+        Direction.LEFT -> Direction.RIGHT
+        Direction.RIGHT_DOWN -> Direction.LEFT_UP
+        Direction.DOWN_LEFT -> Direction.UP_RIGHT
+        Direction.LEFT_UP -> Direction.RIGHT_DOWN
+        Direction.UP_RIGHT -> Direction.DOWN_LEFT
+    }
+}
+
 fun Direction.rotate90DegreesClockwise(): Direction {
     return when (this) {
         Direction.UP -> Direction.RIGHT
