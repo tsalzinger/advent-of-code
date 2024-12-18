@@ -26,6 +26,17 @@ class LazyGrid2D<T>(
             return coordinate.row in (minRow..maxRow) &&
                     coordinate.column in (minColumn..maxColumn)
         }
+
+        companion object {
+            fun of(upperLeft: Coordinate, lowerRight: Coordinate): Boundary {
+                return Boundary(
+                    minRow = upperLeft.row,
+                    maxRow = lowerRight.row,
+                    minColumn = upperLeft.column,
+                    maxColumn = lowerRight.column,
+                )
+            }
+        }
     }
 
     fun getCellAt(coordinate: Coordinate): Cell<T> {

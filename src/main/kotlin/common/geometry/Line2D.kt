@@ -1,6 +1,6 @@
 package me.salzinger.common.geometry
 
-import me.salzinger.common.extensions.toIntList
+import me.salzinger.common.geometry.Point2D.Companion.toPoint2D as correctToPoint2D
 
 data class Line2D(
     val start: Point2D,
@@ -42,13 +42,19 @@ data class Line2D(
     }
 
     companion object {
+        @Deprecated(
+            message = "This function was moved to the companion of Point2D where it was supposed to be from the start",
+            replaceWith = ReplaceWith(
+                expression = "toPoint2D()",
+                imports = ["me.salzinger.common.geometry.Point2D.Companion.toPoint2D"],
+            )
+        )
         fun String.toPoint2D(): Point2D {
-            val (x, y) = trim().toIntList()
-            return Point2D(x, y)
+            return this.correctToPoint2D()
         }
 
         fun String.toLine2D(): Line2D {
-            val (start, end) = split("->").map { it.toPoint2D() }
+            val (start, end) = split("->").map { it.correctToPoint2D() }
             return Line2D(start, end)
         }
     }
