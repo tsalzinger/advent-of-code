@@ -7,9 +7,9 @@ typealias Pattern = String
 typealias Remainder = String
 
 object `Linen Layout` {
-    val cache = mutableMapOf<String, Int>()
+    val cache = mutableMapOf<String, Long>()
 
-    fun Pattern.advance(patternMap: Map<Char, List<String>>): Int {
+    fun Pattern.advance(patternMap: Map<Char, List<String>>): Long {
         if (isEmpty()) {
             return 1
         }
@@ -28,7 +28,20 @@ object `Linen Layout` {
 
         return designs
             .count {
-                it.advance(patternMap) != 0
+                it.advance(patternMap) != 0L
+            }
+    }
+
+    fun Sequence<String>.countArrangementPossibilities(): Long {
+        val (patterns, designs) = toList()
+            .chunkedBy(ChunkConditions.ON_EMPTY_STRING)
+
+        val patternMap = patterns.single().split(", ").groupBy { it.first() }
+            .mapValues { it.value.sortedByDescending(String::count) }
+
+        return designs
+            .sumOf {
+                it.advance(patternMap)
             }
     }
 }
