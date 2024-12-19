@@ -6,12 +6,13 @@ import me.salzinger.common.NeighborProvider
 fun <T> List<T>.countOccurrences(value: T) = this.count { it == value }
 fun <T> List<T>.toPairs(): List<Pair<T, T>> = chunked(2).map { Pair(it[0], it[1]) }
 
-
 enum class ChunkEvaluation {
     APPEND_TO_CHUNK,
     APPEND_TO_NEW_CHUNK,
     END_CHUNK_AND_DISCARD
 }
+
+typealias ChunkCondition<T> = (T) -> ChunkEvaluation
 
 fun <T> List<T>.chunkedBy(chunkCondition: (T) -> ChunkEvaluation): List<List<T>> {
     return if (isEmpty()) {
@@ -43,6 +44,15 @@ fun <T> List<T>.chunkedBy(chunkCondition: (T) -> ChunkEvaluation): List<List<T>>
     }
 }
 
+
+object ChunkConditions {
+    val ON_EMPTY_STRING: ChunkCondition<String> = {
+        when {
+            it.isEmpty() -> ChunkEvaluation.END_CHUNK_AND_DISCARD
+            else -> ChunkEvaluation.APPEND_TO_CHUNK
+        }
+    }
+}
 
 
 /**
