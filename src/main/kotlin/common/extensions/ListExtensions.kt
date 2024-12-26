@@ -52,6 +52,12 @@ object ChunkConditions {
             else -> ChunkEvaluation.APPEND_TO_CHUNK
         }
     }
+    val ON_EMPTY_COLLECTION: ChunkCondition<Collection<Any>> = {
+        when {
+            it.isEmpty() -> ChunkEvaluation.END_CHUNK_AND_DISCARD
+            else -> ChunkEvaluation.APPEND_TO_CHUNK
+        }
+    }
 }
 
 
