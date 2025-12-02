@@ -13,8 +13,8 @@ enum class Direction {
     UP_RIGHT,
 }
 
-fun Direction.isOppositeOf(direction: Direction): Boolean {
-    return when (this) {
+fun Direction.isOppositeOf(direction: Direction): Boolean =
+    when (this) {
         Direction.UP -> direction == Direction.DOWN
         Direction.RIGHT -> direction == Direction.LEFT
         Direction.DOWN -> direction == Direction.UP
@@ -24,10 +24,9 @@ fun Direction.isOppositeOf(direction: Direction): Boolean {
         Direction.LEFT_UP -> direction == Direction.RIGHT_DOWN
         Direction.UP_RIGHT -> direction == Direction.DOWN_LEFT
     }
-}
 
-fun Direction.flip(): Direction {
-    return when (this) {
+fun Direction.flip(): Direction =
+    when (this) {
         Direction.UP -> Direction.DOWN
         Direction.RIGHT -> Direction.LEFT
         Direction.DOWN -> Direction.UP
@@ -37,10 +36,9 @@ fun Direction.flip(): Direction {
         Direction.LEFT_UP -> Direction.RIGHT_DOWN
         Direction.UP_RIGHT -> Direction.DOWN_LEFT
     }
-}
 
-fun Direction.rotate90DegreesClockwise(): Direction {
-    return when (this) {
+fun Direction.rotate90DegreesClockwise(): Direction =
+    when (this) {
         Direction.UP -> Direction.RIGHT
         Direction.RIGHT -> Direction.DOWN
         Direction.DOWN -> Direction.LEFT
@@ -50,10 +48,9 @@ fun Direction.rotate90DegreesClockwise(): Direction {
         Direction.LEFT_UP -> Direction.DOWN_LEFT
         Direction.UP_RIGHT -> Direction.LEFT_UP
     }
-}
 
-fun Direction.rotate90DegreesCounterclockwise(): Direction {
-    return when (this) {
+fun Direction.rotate90DegreesCounterclockwise(): Direction =
+    when (this) {
         Direction.UP -> Direction.LEFT
         Direction.RIGHT -> Direction.UP
         Direction.DOWN -> Direction.RIGHT
@@ -63,10 +60,9 @@ fun Direction.rotate90DegreesCounterclockwise(): Direction {
         Direction.LEFT_UP -> Direction.DOWN_LEFT
         Direction.UP_RIGHT -> Direction.LEFT_UP
     }
-}
 
-operator fun Grid2D.Coordinate.invoke(direction: Direction): Grid2D.Coordinate {
-    return when (direction) {
+operator fun Grid2D.Coordinate.invoke(direction: Direction): Grid2D.Coordinate =
+    when (direction) {
         Direction.UP -> up()
         Direction.RIGHT -> right()
         Direction.DOWN -> down()
@@ -76,10 +72,9 @@ operator fun Grid2D.Coordinate.invoke(direction: Direction): Grid2D.Coordinate {
         Direction.LEFT_UP -> leftUp()
         Direction.UP_RIGHT -> upRight()
     }
-}
 
-fun Grid2D.Coordinate.getDirectionToNeighbor(neighbor: Grid2D.Coordinate): Direction {
-    return when (neighbor) {
+fun Grid2D.Coordinate.getDirectionToNeighbor(neighbor: Grid2D.Coordinate): Direction =
+    when (neighbor) {
         up() -> Direction.UP
         right() -> Direction.RIGHT
         down() -> Direction.DOWN
@@ -90,4 +85,3 @@ fun Grid2D.Coordinate.getDirectionToNeighbor(neighbor: Grid2D.Coordinate): Direc
         upRight() -> Direction.UP_RIGHT
         else -> throw RuntimeException("$neighbor is not a neighbor of $this")
     }
-}

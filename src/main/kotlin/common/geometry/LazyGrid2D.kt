@@ -7,8 +7,7 @@ class LazyGrid2D<T>(
     val valuesProvider: (Coordinate) -> T,
     val boundaryProvider: () -> Boundary,
     private val neighborProvider: (Coordinate.() -> Set<Coordinate>) = Coordinate.NeighborModes.CROSS,
-) :
-    Iterable<Cell<T>> {
+) : Iterable<Cell<T>> {
     val rows: Int
         get() = boundaryProvider().rows
     val columns: Int
@@ -22,51 +21,45 @@ class LazyGrid2D<T>(
     ) {
         val rows = maxRow - minRow + 1
         val columns = maxColumn - minColumn + 1
-        operator fun contains(coordinate: Coordinate): Boolean {
-            return coordinate.row in (minRow..maxRow) &&
-                    coordinate.column in (minColumn..maxColumn)
-        }
+
+        operator fun contains(coordinate: Coordinate): Boolean =
+            coordinate.row in (minRow..maxRow) &&
+                coordinate.column in (minColumn..maxColumn)
 
         companion object {
-            fun of(upperLeft: Coordinate, lowerRight: Coordinate): Boundary {
-                return Boundary(
+            fun of(
+                upperLeft: Coordinate,
+                lowerRight: Coordinate,
+            ): Boundary =
+                Boundary(
                     minRow = upperLeft.row,
                     maxRow = lowerRight.row,
                     minColumn = upperLeft.column,
                     maxColumn = lowerRight.column,
                 )
-            }
         }
     }
 
-    fun getCellAt(coordinate: Coordinate): Cell<T> {
-        return getCellAtOrNull(coordinate) ?: throw RuntimeException("Coordinate is outside of grid boundary")
-    }
+    fun getCellAt(coordinate: Coordinate): Cell<T> =
+        getCellAtOrNull(coordinate) ?: throw RuntimeException("Coordinate is outside of grid boundary")
 
-    fun getCellAtOrNull(coordinate: Coordinate): Cell<T>? {
-        return if (coordinate in this) {
+    fun getCellAtOrNull(coordinate: Coordinate): Cell<T>? =
+        if (coordinate in this) {
             Cell(coordinate, valuesProvider(coordinate))
         } else {
             null
         }
-    }
 
-    operator fun contains(coordinate: Coordinate): Boolean {
-        return coordinate in boundaryProvider()
-    }
+    operator fun contains(coordinate: Coordinate): Boolean = coordinate in boundaryProvider()
 
-    fun getNeighborsOf(coordinate: Coordinate): Set<Cell<T>> {
-        return coordinate
+    fun getNeighborsOf(coordinate: Coordinate): Set<Cell<T>> =
+        coordinate
             .getNeighbors(neighborProvider)
             .mapNotNull {
                 getCellAtOrNull(it)
-            }
-            .toSet()
-    }
+            }.toSet()
 
-    fun getNeighborsOf(cell: Cell<T>): Set<Cell<T>> {
-        return getNeighborsOf(cell.coordinate)
-    }
+    fun getNeighborsOf(cell: Cell<T>): Set<Cell<T>> = getNeighborsOf(cell.coordinate)
 
     override fun iterator(): Iterator<Cell<T>> {
         val boundary = boundaryProvider()
@@ -79,13 +72,11 @@ class LazyGrid2D<T>(
                     .map { column ->
                         getCellAt(Coordinate(row, column))
                     }
-            }
-            .iterator()
+            }.iterator()
     }
 }
 
-fun <T> LazyGrid2D<T>.toConsoleString(transform: ((Cell<T>) -> String)? = null): String {
-    return chunked(columns).joinToString("\n") { row ->
+fun <T> LazyGrid2D<T>.toConsoleString(transform: ((Cell<T>) -> String)? = null): String =
+    chunked(columns).joinToString("\n") { row ->
         row.joinToString(separator = "", transform = transform)
     }
-}

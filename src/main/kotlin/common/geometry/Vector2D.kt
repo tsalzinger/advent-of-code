@@ -24,13 +24,12 @@ data class Vector2D(
         }
     }
 
-    override fun toString(): String {
-        return "($dx,$dy|${angle})"
-    }
+    override fun toString(): String = "($dx,$dy|$angle)"
 
     fun scale(factor: Int) = Vector2D(dx * factor, dy * factor)
 
     operator fun times(factor: Int) = scale(factor)
+
     operator fun div(factor: Int) = Vector2D(dx / factor, dy / factor)
 
     fun minimize() = this / ggt(dx, dy)

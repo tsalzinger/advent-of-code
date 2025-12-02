@@ -21,20 +21,22 @@ detekt {
 
 kotlin {
     compilerOptions {
-        freeCompilerArgs = listOf(
-            "-Xallow-reified-type-in-catch",
-            "-Xallow-contracts-on-more-functions",
-            "-Xallow-condition-implies-returns-contracts",
-            "-Xallow-holdsin-contract",
-            "-Xcontext-parameters",
-            "-Xdata-flow-based-exhaustiveness",
-            "-Xjsr305=strict",
-        )
+        freeCompilerArgs =
+            listOf(
+                "-Xallow-reified-type-in-catch",
+                "-Xallow-contracts-on-more-functions",
+                "-Xallow-condition-implies-returns-contracts",
+                "-Xallow-holdsin-contract",
+                "-Xcontext-parameters",
+                "-Xdata-flow-based-exhaustiveness",
+                "-Xjsr305=strict",
+            )
 
-        optIn = listOf(
-            "kotlin.contracts.ExperimentalContracts",
-            "kotlin.contracts.ExperimentalExtendedContracts",
-        )
+        optIn =
+            listOf(
+                "kotlin.contracts.ExperimentalContracts",
+                "kotlin.contracts.ExperimentalExtendedContracts",
+            )
     }
 }
 
@@ -52,7 +54,7 @@ tasks {
             events(
                 TestLogEvent.PASSED,
                 TestLogEvent.SKIPPED,
-                TestLogEvent.FAILED
+                TestLogEvent.FAILED,
             )
         }
     }

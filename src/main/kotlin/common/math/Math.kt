@@ -3,15 +3,14 @@ package me.salzinger.common.math
 import kotlin.math.abs
 import kotlin.math.max
 
-fun Int.pow(exponent: Int): Long {
-    return this.toLong().pow(exponent)
-}
+fun Int.pow(exponent: Int): Long = this.toLong().pow(exponent)
 
-fun Long.pow(exponent: Int): Long {
-    return power(base = this, exponent = exponent)
-}
+fun Long.pow(exponent: Int): Long = power(base = this, exponent = exponent)
 
-private fun power(base: Long, exponent: Int): Long {
+private fun power(
+    base: Long,
+    exponent: Int,
+): Long {
     var result: Long = 1
 
     repeat(exponent) {
@@ -21,7 +20,10 @@ private fun power(base: Long, exponent: Int): Long {
     return result
 }
 
-fun ggt(x: Int = 0, y: Int = 0): Int {
+fun ggt(
+    x: Int = 0,
+    y: Int = 0,
+): Int {
     var a: Int = abs(x)
     var b: Int = abs(y)
 
@@ -40,7 +42,10 @@ fun ggt(x: Int = 0, y: Int = 0): Int {
     return a
 }
 
-fun leastCommonMultiple(a: Long, b: Long): Long {
+fun leastCommonMultiple(
+    a: Long,
+    b: Long,
+): Long {
     val larger = max(a, b)
     var lcm = larger
     while (true) {
@@ -51,9 +56,7 @@ fun leastCommonMultiple(a: Long, b: Long): Long {
     }
 }
 
-
-fun List<Long>.leastCommonMultiple(): Long {
-    return reduce { leastCommonMultiple, number ->
+fun List<Long>.leastCommonMultiple(): Long =
+    reduce { leastCommonMultiple, number ->
         leastCommonMultiple(leastCommonMultiple, number)
     }
-}

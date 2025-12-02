@@ -4,18 +4,19 @@ import me.salzinger.common.Grid2D
 import me.salzinger.common.NeighborProvider
 
 fun <T> List<T>.countOccurrences(value: T) = this.count { it == value }
+
 fun <T> List<T>.toPairs(): List<Pair<T, T>> = chunked(2).map { Pair(it[0], it[1]) }
 
 enum class ChunkEvaluation {
     APPEND_TO_CHUNK,
     APPEND_TO_NEW_CHUNK,
-    END_CHUNK_AND_DISCARD
+    END_CHUNK_AND_DISCARD,
 }
 
 typealias ChunkCondition<T> = (T) -> ChunkEvaluation
 
-fun <T> List<T>.chunkedBy(chunkCondition: (T) -> ChunkEvaluation): List<List<T>> {
-    return if (isEmpty()) {
+fun <T> List<T>.chunkedBy(chunkCondition: (T) -> ChunkEvaluation): List<List<T>> =
+    if (isEmpty()) {
         emptyList()
     } else {
         foldIndexed(mutableListOf(mutableListOf())) { index: Int, acc: MutableList<MutableList<T>>, item: T ->
@@ -42,8 +43,6 @@ fun <T> List<T>.chunkedBy(chunkCondition: (T) -> ChunkEvaluation): List<List<T>>
             acc
         }.map { it.toList() }
     }
-}
-
 
 object ChunkConditions {
     val ON_EMPTY_STRING: ChunkCondition<String> = {
@@ -60,22 +59,19 @@ object ChunkConditions {
     }
 }
 
-
 /**
  * @param neighborProvider The neighbor provider to use, if `null` the default of [Grid2D] will be used
  */
-fun <T> List<List<T>>.toGrid2D(neighborProvider: NeighborProvider? = null): Grid2D<T> {
-    return if (neighborProvider != null) {
+fun <T> List<List<T>>.toGrid2D(neighborProvider: NeighborProvider? = null): Grid2D<T> =
+    if (neighborProvider != null) {
         Grid2D(this, neighborProvider)
     } else {
         Grid2D(this)
     }
-}
 
-fun <T> List<T>.permutate(): Sequence<Pair<T, T>> {
-    return asSequence().flatMapIndexed { index, element ->
+fun <T> List<T>.permutate(): Sequence<Pair<T, T>> =
+    asSequence().flatMapIndexed { index, element ->
         drop(index + 1).map {
             element to it
         }
     }
-}

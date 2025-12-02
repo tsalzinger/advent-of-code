@@ -6,16 +6,18 @@ data class Line2D(
     val start: Point2D,
     val end: Point2D,
 ) {
-    private fun progressionOf(v1: Int, v2: Int): IntProgression {
-        return if (v1 < v2) {
+    private fun progressionOf(
+        v1: Int,
+        v2: Int,
+    ): IntProgression =
+        if (v1 < v2) {
             v1..v2
         } else {
             v1 downTo v2
         }
-    }
 
-    fun mapToPoint2Ds(): List<Point2D> {
-        return when {
+    fun mapToPoint2Ds(): List<Point2D> =
+        when {
             start.x == end.x -> {
                 progressionOf(start.y, end.y)
                     .map { y ->
@@ -39,19 +41,17 @@ data class Line2D(
                 }
             }
         }
-    }
 
     companion object {
         @Deprecated(
             message = "This function was moved to the companion of Point2D where it was supposed to be from the start",
-            replaceWith = ReplaceWith(
-                expression = "toPoint2D()",
-                imports = ["me.salzinger.common.geometry.Point2D.Companion.toPoint2D"],
-            )
+            replaceWith =
+                ReplaceWith(
+                    expression = "toPoint2D()",
+                    imports = ["me.salzinger.common.geometry.Point2D.Companion.toPoint2D"],
+                ),
         )
-        fun String.toPoint2D(): Point2D {
-            return this.correctToPoint2D()
-        }
+        fun String.toPoint2D(): Point2D = this.correctToPoint2D()
 
         fun String.toLine2D(): Line2D {
             val (start, end) = split("->").map { it.correctToPoint2D() }

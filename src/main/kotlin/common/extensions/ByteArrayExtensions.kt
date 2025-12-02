@@ -1,5 +1,3 @@
 package me.salzinger.common.extensions
 
-fun ByteArray.toInt(): Int {
-    return joinToString("").toInt(2)
-}
+fun ByteArray.toInt(): Int = joinToString("").toInt(2)
