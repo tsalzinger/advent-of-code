@@ -1,8 +1,10 @@
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
-    kotlin("jvm") version "2.1.0"
+    kotlin("jvm") version "2.2.21"
     `java-library`
+    id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
+    id("io.gitlab.arturbosch.detekt") version "1.23.8"
 }
 
 group = "me.salzinger"
@@ -12,9 +14,33 @@ repositories {
     mavenCentral()
 }
 
+detekt {
+    buildUponDefaultConfig = true
+    config.from("$rootDir/detekt-override,.yml")
+}
+
+kotlin {
+    compilerOptions {
+        freeCompilerArgs = listOf(
+            "-Xallow-reified-type-in-catch",
+            "-Xallow-contracts-on-more-functions",
+            "-Xallow-condition-implies-returns-contracts",
+            "-Xallow-holdsin-contract",
+            "-Xcontext-parameters",
+            "-Xdata-flow-based-exhaustiveness",
+            "-Xjsr305=strict",
+        )
+
+        optIn = listOf(
+            "kotlin.contracts.ExperimentalContracts",
+            "kotlin.contracts.ExperimentalExtendedContracts",
+        )
+    }
+}
+
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
-    testImplementation("org.assertj:assertj-core:3.26.3")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
+    testImplementation("org.assertj:assertj-core:3.27.6")
 }
 
 kotlin.jvmToolchain(21)

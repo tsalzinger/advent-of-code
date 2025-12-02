@@ -1,3 +1,6 @@
 .idea/*
 .gradle/
 *.out
+.aocToken
+.aocCache/
+build/
